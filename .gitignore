@@ -1,6 +1,8 @@
 Install/
 Proteus/
 
+Git/MSysGitPortable/
+
 *.eep
 *.elf
 *.hex
