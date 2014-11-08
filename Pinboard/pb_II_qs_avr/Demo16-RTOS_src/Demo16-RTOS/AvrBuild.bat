@@ -1,0 +1,2 @@
+@ECHO OFF
+"D:\Andrii\Atmel\AVR\AvrAssembler2\avrasm2.exe" -S "D:\Andrii\Pinboard\pb_II_qs_avr\Demo16-RTOS_src\Demo16-RTOS\labels.tmp" -fI -W+ie -C V2E -o "D:\Andrii\Pinboard\pb_II_qs_avr\Demo16-RTOS_src\Demo16-RTOS\Demo16-RTOS.hex" -d "D:\Andrii\Pinboard\pb_II_qs_avr\Demo16-RTOS_src\Demo16-RTOS\Demo16-RTOS.obj" -e "D:\Andrii\Pinboard\pb_II_qs_avr\Demo16-RTOS_src\Demo16-RTOS\Demo16-RTOS.eep" -m "D:\Andrii\Pinboard\pb_II_qs_avr\Demo16-RTOS_src\Demo16-RTOS\Demo16-RTOS.map" "D:\Andrii\Pinboard\pb_II_qs_avr\Demo16-RTOS_src\Demo16-RTOS\Demo16-RTOS.asm"

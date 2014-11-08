@@ -1,0 +1,10 @@
+Install/
+Proteus/
+
+*.eep
+*.elf
+*.hex
+*.lss
+*.map
+*.o
+*.d
