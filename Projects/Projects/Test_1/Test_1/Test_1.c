@@ -8,6 +8,10 @@
 #include <common/rtos/libRtos.h>
 #include <common/lcdWH1602b/lcdWH1602b.h>
 
+void idle(TaskParameter param)
+{
+}
+
 int main(void)
 {
 	initRtos();

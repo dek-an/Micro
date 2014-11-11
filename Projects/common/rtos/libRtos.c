@@ -1,8 +1,7 @@
 #include "libRtos.h"
+#include "libRtosDef.h"
 
-// empty task
-inline void idle(const TaskParameter param)
-{}
+#include <util/atomic.h>
 
 // //////////////////////////////////////////////////////////
 // Task Queue
@@ -31,24 +30,9 @@ static void addUpdateTimerTask(const Task timerTask, const TaskParameter param, 
 static void updateTimers(void);
 
 // //////////////////////////////////////////////////////////
-// Interrupts Guard
+// Handler Set
 //
-// TODO: Use ATOMIC_BLOCK definition from utils/atomic.h
-#define IG_BEGIN \
-	BOOL volatile LOCAL_VAR_INTERRUPTS_ENABLED = 0; \
-	if (INTERRUPTS_ENABLED) \
-	{ \
-		CLI(); \
-		LOCAL_VAR_INTERRUPTS_ENABLED = 0xFF; \
-	} \
-	{
 
-#define IG_END \
-	if (LOCAL_VAR_INTERRUPTS_ENABLED) \
-	{ \
-		SEI(); \
-	} \
-	}
 
 // //////////////////////////////////////////////////////////
 // Interface
@@ -62,17 +46,19 @@ inline void initRtos(void)
 // called from everywhere (also from interrupts)
 void setTask(const Task task, const TaskParameter param)
 {
-	IG_BEGIN
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
 		setTaskToTQ(task, param);
-	IG_END
+	}
 }
 
 // called from everywhere (also from interrupts)
 void setTimerTaskMS(const Task task, const TaskParameter param, const uint16 timeMS)
 {
-	IG_BEGIN
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
 		addUpdateTimerTask(task, param, timeMS);
-	IG_END
+	}
 }
 
 // called from main loop only
@@ -80,9 +66,10 @@ inline void taskManager(void)
 {
 	TaskObject currentTaskObject = idleObject;
 
-	IG_BEGIN
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
 		currentTaskObject = getTaskFromTQ();
-	IG_END
+	}
 
 	currentTaskObject.m_task(currentTaskObject.m_param);
 }
