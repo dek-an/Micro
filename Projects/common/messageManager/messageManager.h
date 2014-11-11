@@ -14,13 +14,13 @@ extern void idleHandler(MessageParameter param);
 // //////////////////////////////////////////////////////////
 // Interface
 //
-extern void initMessageManager();
+extern void initMessageManager(void) __attribute__((always_inline));
 
 extern void registerHandler(MessageType msg, Handler hnd);
 extern void unregisterHandler(MessageType msg, Handler hnd);
 
 extern void sendMessage(MessageType msg, MessageParameter param);
-extern void dispatchMessages() __attribute__((always_inline));
+extern void dispatchMessages(void) __attribute__((always_inline));
 
 extern void setTimer(MessageType msg, MessageParameter param, uint16 timeMs);
 extern void killTimer(MessageType msg);

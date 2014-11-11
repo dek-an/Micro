@@ -1,15 +1,42 @@
 #include "messageManager.h"
 
-extern void initMessageManager();
+void initMessageManager(void)
+{
+	
+}
 
-extern void registerHandler(MessageType msg, Handler hnd);
-extern void unregisterHandler(MessageType msg, Handler hnd);
 
-extern void sendMessage(MessageType msg, MessageParameter param);
-extern void dispatchMessages() __attribute__((always_inline));
+void registerHandler(MessageType msg, Handler hnd)
+{
+	
+}
 
-extern void setTimer(MessageType msg, MessageParameter param, uint16 timeMs);
-extern void killTimer(MessageType msg);
+void unregisterHandler(MessageType msg, Handler hnd)
+{
+	
+}
+
+
+void sendMessage(MessageType msg, MessageParameter param)
+{
+	
+}
+
+void dispatchMessages(void)
+{
+	
+}
+
+
+void setTimer(MessageType msg, MessageParameter param, uint16 timeMs)
+{
+	
+}
+
+void killTimer(MessageType msg)
+{
+	
+}
 
 //// структура записи из списка обработчиков
 //typedef struct {
