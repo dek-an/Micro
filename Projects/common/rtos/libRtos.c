@@ -1,8 +1,6 @@
 #include "libRtos.h"
 #include "libRtosDef.h"
 
-#include <util/atomic.h>
-
 // //////////////////////////////////////////////////////////
 // Task Queue
 //

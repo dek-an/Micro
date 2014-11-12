@@ -3,6 +3,10 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+
+#include <util/atomic.h>
+#include <util/delay.h>
 
 // ////////////////////////////////////////
 // Controller defines
@@ -22,10 +26,10 @@
 //
 typedef unsigned char BOOL;
 typedef unsigned char uchar;
-typedef unsigned char uint08;
-typedef unsigned short uint16;
-typedef unsigned long uint32;
-typedef unsigned long long uint64;
+typedef /*unsigned char*/uint8_t uint08;
+typedef /*unsigned short*/uint16_t uint16;
+typedef /*unsigned long*/uint32_t uint32;
+typedef /*unsigned long long*/uint64_t uint64;
 
 // ////////////////////////////////////////
 // Macroses
@@ -38,5 +42,10 @@ typedef unsigned long long uint64;
 #define GBI(byte, bit) ((byte) >> (bit)) & 1
 
 #define INTERRUPTS_ENABLED GBI(STATUS_REG, INTERRUPTS_FLAG)
+
+// ////////////////////////////////////////
+// Constants
+//
+static const uchar EMPTY_STRING[] PROGMEM = "";
 
 #endif // _COMMONHEADER_H_

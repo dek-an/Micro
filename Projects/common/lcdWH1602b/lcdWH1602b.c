@@ -45,6 +45,10 @@ static void putData(const uchar data);
 //
 inline void initLcd(void)
 {
+	static BOOL isInitialized = 0;
+	if (isInitialized)
+		return;
+
 	// wait for 15 ms
 	_delay_ms(15);
 	// 1
@@ -63,6 +67,8 @@ inline void initLcd(void)
 	lcdClear();
 	// display on; cursor off; blinking of cursor off
 	putCommand(0b00001100);
+
+	isInitialized = 0xFF;
 }
 
 BOOL lcdIsBusy(void)
@@ -90,6 +96,17 @@ void lcdClear(void)
 {
 	putCommand(0b00000001);
 	_delay_us(/*1530 - LCD_WRITE_DELAY*/1497);
+}
+
+void lcdGoTo(uchar line, uchar col)
+{
+	putCommand(0b10000000 | ((0x40 * line) + col));
+}
+
+void lcdWriteStrProgMem(const uchar* str)
+{
+	for (register uchar c = pgm_read_byte(str); c != 0; c = pgm_read_byte(str++))
+		lcdWriteChar(c);
 }
 
 // //////////////////////////////////////////////////////////

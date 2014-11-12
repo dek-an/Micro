@@ -119,6 +119,10 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\..\common\commonHeader.h">
+      <SubType>compile</SubType>
+      <Link>include\commonHeader.h</Link>
+    </Compile>
     <Compile Include="..\..\..\common\lcdWH1602b\lcdWH1602b.c">
       <SubType>compile</SubType>
       <Link>src\lcdWH1602b.c</Link>
@@ -131,9 +135,21 @@
       <SubType>compile</SubType>
       <Link>include\lcdWH1602bDef.h</Link>
     </Compile>
+    <Compile Include="..\..\..\common\menu\menu.c">
+      <SubType>compile</SubType>
+      <Link>src\menu.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\common\menu\menu.h">
+      <SubType>compile</SubType>
+      <Link>include\menu.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\common\menu\menuDef.h">
+      <SubType>compile</SubType>
+      <Link>include\menuDef.h</Link>
+    </Compile>
     <Compile Include="..\..\..\common\messageManager\messageManager.c">
       <SubType>compile</SubType>
-      <Link>include\messageManager.c</Link>
+      <Link>src\messageManager.c</Link>
     </Compile>
     <Compile Include="..\..\..\common\messageManager\messageManager.h">
       <SubType>compile</SubType>

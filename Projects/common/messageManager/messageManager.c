@@ -1,6 +1,6 @@
 #include "messageManager.h"
 
-void initMessageManager(void)
+/*void initMessageManager(void)
 {
 	
 }
@@ -36,7 +36,7 @@ void setTimer(MessageType msg, MessageParameter param, uint16 timeMs)
 void killTimer(MessageType msg)
 {
 	
-}
+}*/
 
 //// структура записи из списка обработчиков
 //typedef struct {
