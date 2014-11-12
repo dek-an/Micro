@@ -11,7 +11,7 @@
 
 //#define F_CPU	1000000UL
 
-char Char10[] PROGMEM = {0b00000000,
+const char Char10[] PROGMEM = {0b00000000,
 						 0b00000111,
 						 0b00011111,
 						 0b00011110,
@@ -20,7 +20,7 @@ char Char10[] PROGMEM = {0b00000000,
 						 0b00011111,
 						 0b00000000};
 
-char Char11[] PROGMEM = {0b00000000,
+const char Char11[] PROGMEM = {0b00000000,
 						 0b00011100,
 						 0b00011111,
 						 0b00001111,
@@ -29,7 +29,7 @@ char Char11[] PROGMEM = {0b00000000,
 						 0b00011111,
 						 0b00000000};
 
-char Char12[] PROGMEM = {0b00001010,
+const char Char12[] PROGMEM = {0b00001010,
 						 0b00001110,
 						 0b00000010,
 						 0b00000000,
@@ -38,8 +38,8 @@ char Char12[] PROGMEM = {0b00001010,
 						 0b00000100,
 						 0b00001110};
 
-char stringOne[] PROGMEM = "\10 So long, and thanks \11\0";
-char stringTwo[] PROGMEM = "\12 for all the fish! \12\0";
+const char stringOne[] PROGMEM = "\10 So long, and thanks \11\0";
+const char stringTwo[] PROGMEM = "\12 for all the fish! \12\0";
 	
 int main(void)
 {

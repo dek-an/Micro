@@ -34,13 +34,13 @@
 #define LCDDATAPORT			PORTB					// Порт и пины,
 #define LCDDATADDR			DDRB					// к которым подключены
 #define LCDDATAPIN			PINB					// сигналы D4-D7.
-#define LCD_D4				3
-#define LCD_D5				4
-#define LCD_D6				5
-#define LCD_D7				6
+#define LCD_D4				4
+#define LCD_D5				5
+#define LCD_D6				6
+#define LCD_D7				7
 
-#define LCDCONTROLPORT		PORTB					// Порт и пины,
-#define LCDCONTROLDDR		DDRB					// к которым подключены
+#define LCDCONTROLPORT		PORTA					// Порт и пины,
+#define LCDCONTROLDDR		DDRA					// к которым подключены
 #define LCD_RS				0						// сигналы RS, RW и E.
 #define LCD_RW				1
 #define LCD_E				2
@@ -53,7 +53,7 @@
 */
 
 
-#define LCD_STROBEDELAY_US	5						// Задержка строба
+#define LCD_STROBEDELAY_US	20						// Задержка строба
 
 /*
 	Здесь можно подключить необходимые функции к библиотеке.

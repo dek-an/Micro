@@ -3,21 +3,15 @@
 
 #include <common/lcdWH1602b/lcdWH1602b.h>
 
-static MenuItemPtr k_currentMenuItem = 0;
-
-#define MENU_STACK_SIZE
-static MenuItemPtr k_menuStack[MENU_STACK_SIZE];
-static volatile uint08 k_menuStackTop;
-
-MenuItem EMPTY_MENU_ITEM;// = {0, 0, 0, 0, 0, {0x00}};
-//static MenuItemPtr EMPTY_MENU_ITEM_PTR = &EMPTY_MENU_ITEM;
+const MenuItem EMPTY_MENU_ITEM = {0, 0, 0, 0, 0, {0x00}};
+static MenuItemPtr EMPTY_MENU_ITEM_PTR = &EMPTY_MENU_ITEM;
 
 // //////////////////////////////////////////////////////////
 //
 //
 static BOOL menuItemIsHead(const MenuItemPtr menuItem)
 {
-	return 0/*EMPTY_MENU_ITEM_PTR*/ == MENU_GET_PARENT(menuItem);
+	return EMPTY_MENU_ITEM_PTR == MENU_ITEM_GET_PARENT(menuItem);
 }
 
 static void displayMenu(const MenuObject* menu)
@@ -26,18 +20,19 @@ static void displayMenu(const MenuObject* menu)
 
 	// display parent item or "MENU:" str
 	lcdGoTo(1, 0);
-	if (menuItemIsHead(menu->m_currentItem))
+	const MenuItemPtr currentItem = menu->m_currentItem;
+	if (menuItemIsHead(currentItem))
 	{
 		lcdWriteStrProgMem((uchar*)PSTR("MENU:"));
 	}
 	else
 	{
-		lcdWriteStrProgMem((uchar*)(MENU_GET_PARENT(menu->m_currentItem)->m_text));
+		lcdWriteStrProgMem((uchar*)(MENU_ITEM_GET_PARENT(currentItem)->m_text));
 	}
 
-	// Вторая строка - текущий пункт меню
+	// display current item
 	lcdGoTo(2, 1);
-	lcdWriteStrProgMem((uchar*)menu->m_currentItem->m_text);
+	lcdWriteStrProgMem((uchar*)currentItem->m_text);
 }
 
 // //////////////////////////////////////////////////////////
@@ -67,5 +62,4 @@ void updateMenuTask(TaskParameter param)
 void resetMenu(MenuObject* menu)
 {
 	menu->m_currentItem = menu->m_menuHead;
-	setTask(&updateMenuTask, (TaskParameter)menu);
 }
