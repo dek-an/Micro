@@ -98,7 +98,6 @@ void lcdWriteStr(const char* str)
 	{
 		lcdWriteChar(c);
 	}
-	
 }
 
 void lcdClear(void)
@@ -191,7 +190,12 @@ static void putNibble(const char nibble, LcdCommandType commandType)
 	if (GBI(nibble, 3))
 		SBI(LCD_DATA_PORT, LCD_DB7);
 
-	LCD_STROB();
+	//LCD_STROB();
+
+	LCD_SIG_PORT |= SFT(LCD_E);
+	_delay_us(LCD_STROB_DELAY);
+	LCD_SIG_PORT &= ~SFT(LCD_E);
+
 	_delay_us(LCD_WRITE_DELAY);
 
 	clearLcdMode();

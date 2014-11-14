@@ -1,12 +1,17 @@
 #ifndef _COMMONHEADER_H_
 #define _COMMONHEADER_H_
 
+#ifndef F_CPU
+#	define F_CPU 8000000UL
+#endif
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
 #include <util/atomic.h>
 #include <util/delay.h>
+
 
 // ////////////////////////////////////////
 // Controller defines
