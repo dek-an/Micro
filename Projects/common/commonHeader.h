@@ -20,7 +20,6 @@
 #define CLI() cli()
 #define SEI() sei()
 
-
 // ////////////////////////////////////////
 // Typedefs
 //
@@ -40,6 +39,9 @@ typedef /*unsigned long long*/uint64_t uint64;
 #define CBI(byte, bit) (byte) &= ~SFT(bit)
 #define TBI(byte, bit) (byte) ^= SFT(bit)
 #define GBI(byte, bit) ((byte) >> (bit)) & 1
+
+#define SET_MASK(byte, mask) (byte) |= (mask)
+#define CLEAR_MASK(byte, mask) (byte) &= ~(mask)
 
 #define INTERRUPTS_ENABLED GBI(STATUS_REG, INTERRUPTS_FLAG)
 

@@ -9,15 +9,15 @@
 #define LCD_DATA_PIN PINB
 
 // data pins numbers
-#define LCD_DB7 7
-#define LCD_DB6 6
-#define LCD_DB5 5
-#define LCD_DB4 4
+#define LCD_DB4 3
+#define LCD_DB5 4
+#define LCD_DB6 5
+#define LCD_DB7 6
 
 // signal port
-#define LCD_SIG_PORT PORTA
-#define LCD_SIG_DDR DDRA
-#define LCD_SIG_PIN PINA
+#define LCD_SIG_PORT PORTB
+#define LCD_SIG_DDR DDRB
+#define LCD_SIG_PIN PINB
 
 // signal pins numbers
 #define LCD_RS 0

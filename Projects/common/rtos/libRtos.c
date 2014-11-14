@@ -10,7 +10,7 @@ typedef struct
 	TaskParameter m_param;
 } TaskObject;
 
-static const TaskObject idleObject = { idle, 0 };
+static const TaskObject idleObject = { &idleTask, 0 };
 
 static void initTaskQueue(void);
 static BOOL taskQueueIsEmpty(void);
@@ -26,11 +26,6 @@ static BOOL timerTaskSetIsEmpty(void);
 static BOOL timerTaskSetIsFull(void);
 static void addUpdateTimerTask(const Task timerTask, const TaskParameter param, const uint16 timeMS);
 static void updateTimers(void);
-
-// //////////////////////////////////////////////////////////
-// Handler Set
-//
-
 
 // //////////////////////////////////////////////////////////
 // Interface
@@ -104,10 +99,10 @@ static inline void setTaskToTQ(const Task task, const TaskParameter param)
 	if (taskQueueIsFull())
 		return;
 
-	++m_taskQueueSize;
-	m_taskQueueBegin = (m_taskQueueBegin + 1) & (TASK_QUEUE_SIZE - 1);
 	m_taskQueueBuffer[m_taskQueueBegin].m_task = task;
 	m_taskQueueBuffer[m_taskQueueBegin].m_param = param;
+	m_taskQueueBegin = (m_taskQueueBegin + 1) & (TASK_QUEUE_SIZE - 1);
+	++m_taskQueueSize;
 }
 
 static inline TaskObject getTaskFromTQ(void)

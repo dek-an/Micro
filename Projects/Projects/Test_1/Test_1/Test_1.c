@@ -5,164 +5,229 @@
  *  Author: dekarand
  */ 
 
-#include <common/commonHeader.h>
+#include <common/lcdWH1602b/lcdWH1602b.h>
+#include <common/menu/menu.h>
 
-// //////////////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////
-// data port
-#define LCD_DATA_PORT PORTB
-#define LCD_DATA_DDR DDRB
-#define LCD_DATA_PIN PINB
+#define DISPLAY_TEST
+//#define MENU_TEST
+//#define LIBRTOS_TEST
 
-// data pins numbers
-#define LCD_DB7 7
-#define LCD_DB6 6
-#define LCD_DB5 5
-#define LCD_DB4 4
+volatile uint64 tempVal = 0;
 
-// signal port
-#define LCD_SIG_PORT PORTA
-#define LCD_SIG_DDR DDRA
-#define LCD_SIG_PIN PINA
-
-// signal pins numbers
-#define LCD_RS 0
-#define LCD_RW 1
-#define LCD_E 2
-
-#define LCD_SIG_MASK SFT(LCD_RW) | SFT(LCD_RS) | SFT(LCD_E)
-#define LCD_DATA_MASK SFT(LCD_DB7) | SFT(LCD_DB6) | SFT(LCD_DB5) | SFT(LCD_DB4)
-#define LCD_SET_STROB() SBI(LCD_SIG_PORT, LCD_E)
-#define LCD_CLEAR_STROB() CBI(LCD_SIG_PORT, LCD_E)
-#define LCD_WRITE_DELAY 43
-
-typedef enum
+void idleTask(TaskParameter param)
 {
-	LCD_COMMAND = 0,
-	LCD_DATA = 1
-} LcdCommandType;
-
-static void putNibble(const uchar nibble, LcdCommandType commandType)
-{
-		// signal port to out
-//		LCD_SIG_DDR |= LCD_SIG_MASK;
-
-		// set command/data mode
-		switch (commandType)
-		{
-			case LCD_COMMAND:
-				CBI(LCD_SIG_PORT, LCD_RS);
-				break;
-			case LCD_DATA:
-				SBI(LCD_SIG_PORT, LCD_RS);
-				break;
-		}
-
-		//switch (lcdRW)
-		//{
-			//case LCD_READ:
-			//// read mode
-			//SBI(LCD_SIG_PORT, LCD_RW);
-			//// data port to in with pull-up
-			//LCD_DATA_DDR &= ~LCD_DATA_MASK;
-			//LCD_DATA_PORT |= LCD_DATA_MASK;
-			//break;
-			//case LCD_WRITE:
-			// write mode
-			CBI(LCD_SIG_PORT, LCD_RW);
-			// data port to out
-			//LCD_DATA_DDR |= LCD_DATA_MASK;
-			//break;
-		//}
-
-	// clear data port
-	LCD_DATA_PORT &= ~LCD_DATA_MASK;
-	_delay_us(LCD_WRITE_DELAY);
-	
-	// set strob
-	SBI(LCD_SIG_PORT, LCD_E);
-
-	// set nibble
-	if (GBI(nibble, 0))
-		SBI(LCD_DATA_PORT, LCD_DB4);
-	if (GBI(nibble, 1))
-		SBI(LCD_DATA_PORT, LCD_DB5);
-	if (GBI(nibble, 2))
-		SBI(LCD_DATA_PORT, LCD_DB6);
-	if (GBI(nibble, 3))
-		SBI(LCD_DATA_PORT, LCD_DB7);
-
-	// delay
-	_delay_us(LCD_WRITE_DELAY);
-
-	// clear strob
-	CBI(LCD_SIG_PORT, LCD_E);
-	_delay_us(LCD_WRITE_DELAY);
+	//tempVal &= param;
 }
 
-static void putByte(const uchar byte, LcdCommandType commandType)
+void taskTM22(TaskParameter param)
 {
-	// high nibble
-	putNibble((byte >> 4), commandType);
-	// low nibble
-	putNibble(byte, commandType);
+	//MenuObject* menu = (MenuObject*)param;
+	//tempVal = (uint16)menu->m_invokedItem;
 }
 
-static void initLcd(void)
+void testTask(TaskParameter param)
 {
-	LCD_SIG_DDR |= LCD_SIG_MASK;
-	LCD_DATA_DDR |= LCD_DATA_MASK;
-	
-	// wait for 15 ms
-	_delay_ms(15);
-	// 1
-	//putNibble(0b0011, LCD_COMMAND);
-	//_delay_us(/*4100 - LCD_WRITE_DELAY*/4057);
-	//// 2
-	//putNibble(0b0011, LCD_COMMAND);
-	//_delay_us(/*100 - LCD_WRITE_DELAY*/57);
-	//// 3
-	//putNibble(0b0011, LCD_COMMAND);
-	// 4-bit
-	putNibble(0b0010, LCD_COMMAND);
-	// 4-bit; 2 lines; 5x11 dots
-	putByte(0b00101100, LCD_COMMAND);
-	// display on; cursor off; blinking of cursor off
-	putByte(0b00001100, LCD_COMMAND);
-	// display clear
-	putByte(0b00000001, LCD_COMMAND);
-	_delay_ms(2);
-	putByte(0b00000100, LCD_COMMAND);
+	tempVal = param;
 }
 
-void writeChar(char c)
+
+static void displayTest()
 {
-	putByte(c, LCD_DATA);
-}
+#ifdef DISPLAY_TEST
+	static const char numbers[] PROGMEM = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
 
-// //////////////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////
+//lcdGoTo(1, 3);
 
-static const uchar numbers[] PROGMEM = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
-
-int main(void)
-{
+	_delay_ms(100);
 	initLcd();
-
 	char col = 0;
 	for (;;)
 	{
 		_delay_ms(1000);
-
-		writeChar((uchar)pgm_read_byte(&numbers[col % 10]));
+		lcdWriteChar(pgm_read_byte(&numbers[col % 10]));
 		_delay_ms(1000);
-		putByte(0b00000001, LCD_COMMAND);
+		lcdClear();
 		_delay_ms(2);
-		writeChar((uchar)pgm_read_byte(&numbers[col++ % 10]));
+		lcdWriteChar(pgm_read_byte(&numbers[col++ % 10]));
 		_delay_ms(1000);
+
+		lcdClear();
+		lcdWriteChar('a');
+		lcdWriteChar('b');
+		lcdWriteChar('c');
+		_delay_ms(1000);
+		lcdWriteChar('A');
+		lcdWriteChar('B');
+		lcdWriteChar('C');
+		_delay_ms(1000);
+		lcdClear();
+		lcdWriteStr("This is a String");
+		_delay_ms(2000);
+		lcdClear();
+
+		lcdWriteStr("Position\0");
+		_delay_ms(3000);
+		lcdGoTo(1, 3);
+		lcdWriteStr("here");
+		_delay_ms(1000);
+		lcdClear();
+
+		lcdGoTo(0, 4);
+		lcdWriteStr("Position 0-4");
+		lcdWriteStr("here");
+		_delay_ms(1000);
+		lcdClear();
 	}
+#endif
+}
+
+#ifdef MENU_TEST
+//				NAME			NEXT				PREVIOUS			PARENT				CHILD				TASK		TEXT
+MENU_MAKE_ITEM(	startMenu1,		startMenu2,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	tableMenu1,			&idleTask,	"SM1");
+MENU_MAKE_ITEM(	startMenu2,		EMPTY_MENU_ITEM,	startMenu1,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	&idleTask,	"SM2");
+MENU_MAKE_ITEM(	tableMenu1,		tableMenu2,			EMPTY_MENU_ITEM,	startMenu1,			EMPTY_MENU_ITEM,	&idleTask,	"TM1");
+MENU_MAKE_ITEM(	tableMenu2,		EMPTY_MENU_ITEM,	tableMenu1,			startMenu1,			tableMenu21,		&idleTask,	"TM2");
+MENU_MAKE_ITEM(	tableMenu21,	tableMenu22,		EMPTY_MENU_ITEM,	tableMenu2,			EMPTY_MENU_ITEM,	&idleTask,	"TM21");
+MENU_MAKE_ITEM(	tableMenu22,	EMPTY_MENU_ITEM,	tableMenu21,		tableMenu2,			EMPTY_MENU_ITEM,	&taskTM22,	"TM22");
+#endif
+
+static void menuTest()
+{
+#ifdef MENU_TEST
+	initLcd();
+	lcdWriteStr("MENU TEST");
+	_delay_ms(3000);
+	lcdClear();
+
+	initRtos();
+	initMenu();
+
+	MenuObject menu;
+	MenuObject* menuPtr = &menu;
+
+	lcdWriteStr("First Item");
+	lcdGoTo(1, 0);
+	lcdWriteStrProgMem(menuPtr->m_currentItem->m_text);
+	_delay_ms(3000);
+
+	for (;;)
+	{
+		startMenu(menuPtr, (const MenuItemPtr)&startMenu1);
+		taskManager();
+		_delay_ms(1000);
+
+		menuNext(menuPtr); // sm2
+		taskManager();
+		_delay_ms(1000);
+
+		menuNext(menuPtr); // sm2
+		taskManager();
+		_delay_ms(1000);
+
+		menuPrev(menuPtr); // sm1
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm1
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm1
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepOut(menuPtr); // sm1
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepOut(menuPtr); // sm1
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm1
+		taskManager();
+		_delay_ms(1000);
+
+		menuNext(menuPtr); // tm2
+		taskManager();
+		_delay_ms(1000);
+
+		menuNext(menuPtr); // tm2
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm21
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepOut(menuPtr); // tm2
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm21
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm21; no task
+		taskManager();
+		_delay_ms(1000);
+
+		menuNext(menuPtr); // tm22
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm22; taskTM22
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm22; taskTM22
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepIn(menuPtr); // tm22; taskTM22
+		taskManager();
+		_delay_ms(1000);
+
+		menuNext(menuPtr); // tm22
+		taskManager();
+		_delay_ms(1000);
+
+		menuPrev(menuPtr); // tm22
+		taskManager();
+		_delay_ms(1000);
+
+		menuStepOut(menuPtr); // tm22
+		taskManager();
+		_delay_ms(1000);
+
+	}
+#endif
+}
+
+static void libRtosTest()
+{
+#ifdef LIBRTOS_TEST
+	initRtos();
+	const uint08 tn = 20;
+	for (char i = 0; i < tn; ++i)
+	setTask(&testTask, i);
+	for (char i = 0; i < tn; ++i)
+	taskManager();
+	taskManager();
+	taskManager();
+	for (char i = 0; i < tn; ++i)
+	setTask(&testTask, i);
+	for (char i = 0; i < tn; ++i)
+	taskManager();
+#endif
+}
+
+
+int main(void)
+{
+	displayTest();
+	menuTest();
+	libRtosTest();
 
 	return 0;
 }

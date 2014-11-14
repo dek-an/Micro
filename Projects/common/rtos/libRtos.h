@@ -10,7 +10,7 @@
 typedef uint16 TaskParameter; // should be uint16 as pointer size
 typedef void (*Task)(const TaskParameter);
 // empty task; should be defined by user
-extern void idle(const TaskParameter);
+extern void idleTask(const TaskParameter);
 
 // //////////////////////////////////////////////////////////
 // Interface

@@ -5,11 +5,11 @@
 
 extern void initLcd(void);
 extern BOOL lcdIsBusy(void);
-extern void lcdWriteChar(const uchar c);
-extern void lcdWriteStr(const uchar* str);
+extern void lcdWriteChar(const char c);
+extern void lcdWriteStr(const char* str);
 extern void lcdClear(void);
-extern void lcdGoTo(uchar line, uchar col);
+extern void lcdGoTo(uint08 line, uint08 col);
 
-extern void lcdWriteStrProgMem(const uchar* str);
+extern void lcdWriteStrProgMem(const char* str);
 
 #endif // _LCDWH1602B_H_
