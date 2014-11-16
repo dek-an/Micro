@@ -5,6 +5,7 @@
 
 extern void initLcd(void);
 extern BOOL lcdIsBusy(void);
+extern void waitWhileBusy();
 extern void lcdWriteChar(const char c);
 extern void lcdWriteStr(const char* str);
 extern void lcdClear(void);

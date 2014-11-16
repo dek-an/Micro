@@ -96,13 +96,17 @@ void LCDGotoXY(uint8_t x,uint8_t y)			//Устанавливаем курсор в X, Y позицию
 	
 	LCDcommand(1<<7 | Address);
 }
-void LCDstring(char *i,uint8_t x,uint8_t y) //Вывести строку на дисплей.
+void LCDstr(char *i) //Вывести строку на дисплей.
 {
-	LCDGotoXY(x,y);
 	while( *i )
 	{
 		LCDdata(*i++ );
 	}
+}
+void LCDstring(char *i,uint8_t x,uint8_t y) //Вывести строку на дисплей.
+{
+	LCDGotoXY(x,y);
+	LCDstr(i);
 }
 void LCDstring_of_sram(uint8_t* data,uint8_t nBytes,uint8_t x, uint8_t y)
 {
@@ -120,14 +124,18 @@ void LCDstring_of_sram(uint8_t* data,uint8_t nBytes,uint8_t x, uint8_t y)
 	
 	
 }
-void LCDstring_of_flash(const uint8_t *FlashLoc,uint8_t x,uint8_t y)
+void LCDstr_of_flash(const uint8_t*FlashLoc)//Вывести строку из флеша
 {
 	uint8_t i;
-	LCDGotoXY(x,y);
 	for(i=0;(uint8_t)pgm_read_byte(&FlashLoc[i]);i++)
 	{
 		LCDdata((uint8_t)pgm_read_byte(&FlashLoc[i]));
 	}
+}
+void LCDstring_of_flash(const uint8_t *FlashLoc,uint8_t x,uint8_t y)
+{
+	LCDGotoXY(x,y);
+	LCDstr_of_flash(FlashLoc);
 }
 void LCDset(void)			//Двухстрочный дисплей 5x8 точек
 {

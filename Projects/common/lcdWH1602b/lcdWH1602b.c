@@ -1,6 +1,56 @@
 #include "lcdWH1602b.h"
 #include "lcdWH1602bDef.h"
 
+#define LCD_USE_THIRDPARTY
+
+// //////////////////////////////////////////////////////////
+// ThirdParty
+//
+#ifdef LCD_USE_THIRDPARTY
+
+#include <thirdParty/Atmega16_LCD_LIB/LCD.h>
+
+void initLcd(void)
+{
+	LCDinit();
+}
+
+BOOL lcdIsBusy(void)
+{
+	return 0x00;
+}
+
+void waitWhileBusy()
+{
+	for (; lcdIsBusy();) { /* do nothing */ }
+}
+
+void lcdWriteChar(const char c)
+{
+	LCDdata(c);
+}
+
+void lcdWriteStr(const char* str)
+{
+	LCDstr((char*)str);
+}
+
+void lcdClear(void)
+{
+	LCDcommand(0b00000001);
+}
+
+void lcdGoTo(uint08 line, uint08 col)
+{
+	LCDGotoXY(col, line);
+}
+
+void lcdWriteStrProgMem(const char* str)
+{
+	LCDstr_of_flash((const uint8_t*)str);
+}
+
+#else // !LCD_USE_THIRDPARTY
 #include <util/delay.h>
 
 // //////////////////////////////////////////////////////////
@@ -21,15 +71,14 @@ typedef enum
 // Nibble is 4 low bits of the byte: 0xhhhhLLLL
 static void setLcdMode(const LcdCommandType commandType, const LcdReadWrite lcdRW);
 static void clearLcdMode();
-static void putNibble(const char nibble, const LcdCommandType commandType);
-static char getNibble(const LcdCommandType commandType);
+static void putNibble(const char nibble);
+static char getNibble();
 static void putByte(const char byte, const LcdCommandType commandType);
 static char getByte(const LcdCommandType commandType);
 static void inline putCommand(const char command);
 static void inline putData(const char data);
 static inline char getCommand();
 //static inline char getData();
-static void inline waitWhileBusy();
 
 // ///////////////////////////////////////////////
 // LCD Defines
@@ -53,22 +102,29 @@ inline void initLcd(void)
 	_delay_ms(100);
 
 	// signal port to out; don't touch signal DDR anymore
-	SET_MASK(LCD_SIG_DDR, LCD_SIG_MASK);
+	MASK_SET(LCD_SIG_DDR, LCD_SIG_MASK);
 	clearLcdMode();
 
+	setLcdMode(LCD_COMMAND, LCD_WRITE);
+
 	// 1
-	putNibble(0b0011, LCD_COMMAND);
+	putNibble(0b0011);
 	_delay_us(4100);
 	// 2
-	putNibble(0b0011, LCD_COMMAND);
+	putNibble(0b0011);
 	_delay_us(100);
 	// 3
-	putNibble(0b0011, LCD_COMMAND);
+	putNibble(0b0011);
 
 	//waitWhileBusy();
 
 	// 4-bit
-	putNibble(0b0010, LCD_COMMAND);
+	putNibble(0b0010);
+
+	clearLcdMode();
+
+	// 4-bit; 2 lines; 5x11 dots
+	putCommand(0b00101100);
 	// 4-bit; 2 lines; 5x11 dots
 	putCommand(0b00101100);
 	// display on; cursor off; blinking of cursor off
@@ -85,6 +141,11 @@ BOOL lcdIsBusy(void)
 		return 0xFF;
 
 	return 0x00;
+}
+
+void waitWhileBusy()
+{
+	for (; lcdIsBusy();) { /* do nothing */ }
 }
 
 void lcdWriteChar(const char c)
@@ -108,7 +169,7 @@ void lcdClear(void)
 
 void lcdGoTo(uint08 line, uint08 col)
 {
-	putCommand((0b10000000) | ((0x40 * (line & 1)) + col));
+	putCommand((((line & 1) * 0x40) + (col & 15)) | 0b10000000);
 }
 
 void lcdWriteStrProgMem(const char* str)
@@ -138,15 +199,15 @@ static void setLcdMode(const LcdCommandType commandType, const LcdReadWrite lcdR
 	{
 	case LCD_READ:
 		// data port to in with pull-up
-		CLEAR_MASK(LCD_DATA_DDR, LCD_DATA_MASK);
-		SET_MASK(LCD_DATA_PORT, LCD_DATA_MASK);
+		MASK_CLEAR(LCD_DATA_DDR, LCD_DATA_MASK);
+		MASK_SET(LCD_DATA_PORT, LCD_DATA_MASK);
 		// read mode
 		SBI(LCD_SIG_PORT, LCD_RW);
 		break;
 	case LCD_WRITE:
 		// data port to out
-		SET_MASK(LCD_DATA_DDR, LCD_DATA_MASK);
-		CLEAR_MASK(LCD_DATA_PORT, LCD_DATA_MASK);
+		MASK_SET(LCD_DATA_DDR, LCD_DATA_MASK);
+		MASK_CLEAR(LCD_DATA_PORT, LCD_DATA_MASK);
 		// write mode
 		CBI(LCD_SIG_PORT, LCD_RW);
 		break;
@@ -169,16 +230,17 @@ static void setLcdMode(const LcdCommandType commandType, const LcdReadWrite lcdR
 static void clearLcdMode()
 {
 	// data port to Hi-Z in
-	CLEAR_MASK(LCD_DATA_DDR, LCD_DATA_MASK);
-	CLEAR_MASK(LCD_DATA_PORT, LCD_DATA_MASK);
+	MASK_CLEAR(LCD_DATA_DDR, LCD_DATA_MASK);
+	MASK_CLEAR(LCD_DATA_PORT, LCD_DATA_MASK);
 
 	// set RW, RS, E to zero
-	CLEAR_MASK(LCD_SIG_PORT, LCD_SIG_MASK);
+	MASK_CLEAR(LCD_SIG_PORT, LCD_SIG_MASK);
 }
 
-static void putNibble(const char nibble, LcdCommandType commandType)
+static void putNibble(const char nibble)
 {
-	setLcdMode(commandType, LCD_WRITE);
+	// ports should be setted!
+	MASK_CLEAR(LCD_DATA_PORT, LCD_DATA_MASK);
 
 	// set nibble to data port
 	if (GBI(nibble, 0))
@@ -190,20 +252,14 @@ static void putNibble(const char nibble, LcdCommandType commandType)
 	if (GBI(nibble, 3))
 		SBI(LCD_DATA_PORT, LCD_DB7);
 
-	//LCD_STROB();
-
-	LCD_SIG_PORT |= SFT(LCD_E);
-	_delay_us(LCD_STROB_DELAY);
-	LCD_SIG_PORT &= ~SFT(LCD_E);
+	LCD_STROB();
 
 	_delay_us(LCD_WRITE_DELAY);
-
-	clearLcdMode();
 }
 
-static char getNibble(const LcdCommandType commandType)
+static char getNibble()
 {
-	setLcdMode(commandType, LCD_READ);
+	// ports should be setted!
 
 	LCD_SET_STROB();
 	_delay_us(LCD_READ_DELAY);
@@ -220,26 +276,33 @@ static char getNibble(const LcdCommandType commandType)
 
 	LCD_CLEAR_STROB();
 
-	clearLcdMode();
-
 	return val;
 }
 
 static void putByte(const char byte, LcdCommandType commandType)
 {
 	waitWhileBusy();
+
+	setLcdMode(commandType, LCD_WRITE);
+
 	// high nibble
-	putNibble(byte >> 4, commandType);
+	putNibble(byte >> 4);
 	// low nibble
-	putNibble(byte, commandType);
+	putNibble(byte);
+
+	clearLcdMode();
 }
 
 static char getByte(LcdCommandType commandType)
 {
+	setLcdMode(commandType, LCD_READ);
+
 	// high nibble
-	char val = getNibble(commandType) << 4;
+	char val = getNibble() << 4;
 	// low nibble
-	val |= getNibble(commandType);
+	val |= getNibble();
+
+	clearLcdMode();
 
 	return val;
 }
@@ -263,8 +326,4 @@ static inline char getCommand()
 //{
 	//return getByte(LCD_DATA);
 //}
-
-static void inline waitWhileBusy()
-{
-	for (; lcdIsBusy();) { /* do nothing */ }
-}
+#endif // LCD_USE_THIRDPARTY

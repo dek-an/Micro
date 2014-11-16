@@ -54,8 +54,10 @@ void LCDinit(void);							//Инициализация LCD
 void LCDcommand(uint8_t);					//Отправка команды, настройка дисплея  
 void LCDGotoXY(uint8_t, uint8_t);			//Устанавливаем курсор в X, Y позицию
 void LCDdata(uint8_t);						//Вывести 1 символ на дисплей.
+void LCDstr(char*i);						//Вывести строку на дисплей
 void LCDstring(char*i,uint8_t,uint8_t);		//Вывести строку на дисплей в позицию x,y
 void LCDstring_of_sram(uint8_t*,uint8_t,uint8_t,uint8_t);//Вывести строку на дисплей в позицию x,y из ОЗУ		
+void LCDstr_of_flash(const uint8_t*);//Вывести строку из флеша
 void LCDstring_of_flash(const uint8_t*,uint8_t, uint8_t);//Вывести строку в позицию x,y из флеша
 void LCDset(void);				//Двухстрочный дисплей 5x8 точек.
 void LCDblank(void);			//Сделать невидимым инфо на дисплее

@@ -20,40 +20,39 @@ static void displayTest()
 	char col = 0;
 	for (;;)
 	{
-		lcdWriteStr("Position\0");
-		_delay_ms(3000);
-		lcdGoTo(1, 3);
-		lcdWriteStr("here");
-		_delay_ms(1000);
-		lcdClear();
-
-		_delay_ms(1000);
+		_delay_ms(2000);
 		lcdWriteChar(pgm_read_byte(&numbers[col % 10]));
-		_delay_ms(1000);
+		_delay_ms(2000);
 		lcdClear();
 		_delay_ms(2);
 		lcdWriteChar(pgm_read_byte(&numbers[col++ % 10]));
-		_delay_ms(1000);
+		_delay_ms(2000);
 
 		lcdClear();
 		lcdWriteChar('a');
 		lcdWriteChar('b');
 		lcdWriteChar('c');
-		_delay_ms(1000);
+		_delay_ms(2000);
 		lcdWriteChar('A');
 		lcdWriteChar('B');
 		lcdWriteChar('C');
-		_delay_ms(1000);
+		_delay_ms(2000);
 		lcdClear();
 		lcdWriteStr("This is a String");
 		_delay_ms(2000);
 		lcdClear();
 
-
-		lcdGoTo(0, 4);
-		lcdWriteStr("Position 0-4");
+		lcdWriteStr("Position 1-4");
+		lcdGoTo(1, 4);
 		lcdWriteStr("here");
-		_delay_ms(1000);
+		_delay_ms(2000);
+		lcdClear();
+
+		lcdGoTo(1, 0);
+		lcdWriteStr("Position 0-4");
+		lcdGoTo(0, 4);
+		lcdWriteStr("here");
+		_delay_ms(2000);
 		lcdClear();
 	}
 #endif

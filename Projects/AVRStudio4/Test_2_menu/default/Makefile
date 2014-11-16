@@ -1,11 +1,11 @@
 ###############################################################################
-# Makefile for the project Test_1_lcd
+# Makefile for the project Test_2_menu
 ###############################################################################
 
 ## General Flags
-PROJECT = Test_1_lcd
+PROJECT = Test_2_menu
 MCU = atmega16
-TARGET = Test_1_lcd.elf
+TARGET = Test_2_menu.elf
 CC = avr-gcc
 
 CPP = avr-g++
@@ -25,7 +25,7 @@ ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
 
 ## Linker flags
 LDFLAGS = $(COMMON)
-LDFLAGS +=  -Wl,-Map=Test_1_lcd.map
+LDFLAGS +=  -Wl,-Map=Test_2_menu.map
 
 
 ## Intel Hex file production flags
@@ -37,23 +37,29 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Include Directories
-INCLUDES = -I"D:\Andrii\Micro\Projects\AVRStudio4\Test_1_lcd\..\.." 
+INCLUDES = -I"D:\Andrii\Micro\Projects\AVRStudio4\Test_2_menu\..\.." 
 
 ## Objects that must be built in order to link
-OBJECTS = Test_1_lcd.o lcdWH1602b.o LCD.o 
+OBJECTS = Test_2_menu.o LCD.o lcdWH1602b.o libRtos.o menu.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
 
 ## Build
-all: $(TARGET) Test_1_lcd.hex Test_1_lcd.eep Test_1_lcd.lss## Compile
-Test_1_lcd.o: ../Test_1_lcd.c
+all: $(TARGET) Test_2_menu.hex Test_2_menu.eep Test_2_menu.lss## Compile
+Test_2_menu.o: ../Test_2_menu.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+LCD.o: ../../../thirdParty/Atmega16_LCD_LIB/LCD.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 lcdWH1602b.o: ../../../common/lcdWH1602b/lcdWH1602b.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-LCD.o: ../../../thirdParty/Atmega16_LCD_LIB/LCD.c
+libRtos.o: ../../../common/rtos/libRtos.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+menu.o: ../../../common/menu/menu.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link
@@ -72,7 +78,7 @@ $(TARGET): $(OBJECTS)
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) Test_1_lcd.elf dep/* Test_1_lcd.hex Test_1_lcd.eep Test_1_lcd.lss Test_1_lcd.map
+	-rm -rf $(OBJECTS) Test_2_menu.elf dep/* Test_2_menu.hex Test_2_menu.eep Test_2_menu.lss Test_2_menu.map
 
 
 ## Other dependencies

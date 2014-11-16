@@ -37,8 +37,8 @@ void initMenu(void)
 void startMenu(MenuObject* menu, const MenuItemPtr head)
 {
 	menu->m_menuHead = head;
-	menu->m_invokedItem = EMPTY_MENU_ITEM_PTR;
 	menu->m_lastDisplayed = EMPTY_MENU_ITEM_PTR;
+	menu->m_isInvoked = FALSE;
 
 	updateCurrentItem(menu, head);
 }
@@ -51,7 +51,7 @@ void updateMenuTask(const TaskParameter param)
 
 void resetMenu(MenuObject* menu)
 {
-	menu->m_invokedItem = EMPTY_MENU_ITEM_PTR;
+	menu->m_isInvoked = FALSE;
 	menu->m_lastDisplayed = EMPTY_MENU_ITEM_PTR;
 	updateCurrentItem(menu, menu->m_menuHead);
 }
@@ -84,9 +84,8 @@ void menuStepOut(MenuObject* menu)
 {
 	if (menuIsInvoked(menu))
 	{
-		const MenuItemPtr invokedItem = menu->m_invokedItem;
-		menu->m_invokedItem = EMPTY_MENU_ITEM_PTR;
-		updateCurrentItem(menu, invokedItem);
+		menu->m_isInvoked = FALSE;
+		setTask(&updateMenuTask, (const TaskParameter)menu);
 	}
 	else
 	{
@@ -106,7 +105,8 @@ void menuStepIn(MenuObject* menu)
 		const Task currentTask = MENU_ITEM_GET_TASK(menu->m_currentItem);
 		if (currentTask != &idleTask)
 		{
-			menu->m_invokedItem = menu->m_currentItem;
+			menu->m_isInvoked = !FALSE;
+			menu->m_lastDisplayed = EMPTY_MENU_ITEM_PTR;
 			setTask(currentTask, (const TaskParameter)menu);
 		}
 	}
@@ -135,7 +135,7 @@ static inline BOOL menuItemIsEmpty(const MenuItemPtr menuItem)
 
 static inline BOOL menuIsInvoked(const MenuObject* menu)
 {
-	return !menuItemIsEmpty(menu->m_invokedItem);
+	return menu->m_isInvoked;
 }
 
 static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurrent)
@@ -147,13 +147,13 @@ static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurr
 static void displayMenu(MenuObject* menu)
 {
 	const MenuItemPtr currentItem = menu->m_currentItem;
-	if (currentItem == menu->m_lastDisplayed);
+	if (currentItem == menu->m_lastDisplayed)
 		return;
 
 	lcdClear();
 
 	// display parent item or "MENU:" str
-	lcdGoTo(1, 0);
+	lcdGoTo(0, 0);
 	const MenuItemPtr parentItem = MENU_ITEM_GET_PARENT(currentItem);
 	if (menuItemIsEmpty(parentItem))
 	{
@@ -165,7 +165,7 @@ static void displayMenu(MenuObject* menu)
 	}
 
 	// display current item
-	lcdGoTo(2, 1);
+	lcdGoTo(1, 2);
 	lcdWriteStrProgMem(currentItem->m_text);
 
 	menu->m_lastDisplayed = currentItem;

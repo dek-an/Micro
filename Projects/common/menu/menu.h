@@ -32,8 +32,8 @@ typedef struct MenuObject
 {
 	MenuItemPtr m_menuHead;
 	MenuItemPtr m_currentItem;
-	MenuItemPtr m_invokedItem; // if we invoke Task for Lowest Item then we save this Invoked Item here
 	MenuItemPtr m_lastDisplayed;
+	BOOL m_isInvoked;
 } MenuObject;
 
 extern const MenuItem EMPTY_MENU_ITEM;

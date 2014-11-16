@@ -35,6 +35,8 @@ typedef /*unsigned short*/uint16_t uint16;
 typedef /*unsigned long*/uint32_t uint32;
 typedef /*unsigned long long*/uint64_t uint64;
 
+#define FALSE 0x00
+
 // ////////////////////////////////////////
 // Macroses
 //
@@ -45,8 +47,8 @@ typedef /*unsigned long long*/uint64_t uint64;
 #define TBI(byte, bit) (byte) ^= SFT(bit)
 #define GBI(byte, bit) ((byte) >> (bit)) & 1
 
-#define SET_MASK(byte, mask) (byte) |= (mask)
-#define CLEAR_MASK(byte, mask) (byte) &= ~(mask)
+#define MASK_SET(byte, mask) (byte) |= (mask)
+#define MASK_CLEAR(byte, mask) (byte) &= ~(mask)
 
 #define INTERRUPTS_ENABLED GBI(STATUS_REG, INTERRUPTS_FLAG)
 
