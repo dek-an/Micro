@@ -17,7 +17,7 @@ void initLcd(void)
 
 BOOL lcdIsBusy(void)
 {
-	return 0x00;
+	return FALSE;
 }
 
 void waitWhileBusy()
@@ -92,11 +92,11 @@ static inline char getCommand();
 //
 inline void initLcd(void)
 {
-	static BOOL isInitialized = 0x00;
+	static BOOL isInitialized = FALSE;
 	if (isInitialized)
 		return;
 
-	isInitialized = 0xFF;
+	isInitialized = !FALSE;
 
 	// wait for 15 ms
 	_delay_ms(100);
@@ -138,9 +138,9 @@ inline void initLcd(void)
 BOOL lcdIsBusy(void)
 {
 	if (GBI(getCommand(), LCD_BF))
-		return 0xFF;
+		return !FALSE;
 
-	return 0x00;
+	return FALSE;
 }
 
 void waitWhileBusy()
@@ -319,6 +319,7 @@ static inline void putData(const char data)
 
 static inline char getCommand()
 {
+	getByte(LCD_COMMAND);
 	return getByte(LCD_COMMAND);
 }
 
