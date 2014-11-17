@@ -3,7 +3,7 @@
 
 #include <common/commonHeader.h>
 
-extern void initLcd(void);
+extern void initLcd(void) __attribute__((always_inline));
 extern BOOL lcdIsBusy(void);
 extern void waitWhileBusy();
 extern void lcdWriteChar(const char c);

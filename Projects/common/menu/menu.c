@@ -25,12 +25,14 @@ static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurr
 static void displayMenu(MenuObject* menu);
 
 // //////////////////////////////////////////////////////////
-// Interface
+// Interface Implementation
 //
 const MenuItem EMPTY_MENU_ITEM = {0, 0, 0, 0, &idleTask, {0x00}};
 
 void initMenu(void)
 {
+	INITIALIZE_CHECKING();
+
 	initLcd();
 }
 
@@ -140,6 +142,9 @@ static inline BOOL menuIsInvoked(const MenuObject* menu)
 
 static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurrent)
 {
+	if (newCurrent == EMPTY_MENU_ITEM_PTR || newCurrent == menu->m_currentItem)
+		return;
+
 	menu->m_currentItem = newCurrent;
 	setTask(&updateMenuTask, (const TaskParameter)menu);
 }

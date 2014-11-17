@@ -92,11 +92,7 @@ static inline char getCommand();
 //
 inline void initLcd(void)
 {
-	static BOOL isInitialized = FALSE;
-	if (isInitialized)
-		return;
-
-	isInitialized = !FALSE;
+	INITIALIZE_CHECKING();
 
 	// wait for 15 ms
 	_delay_ms(100);

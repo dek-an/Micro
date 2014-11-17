@@ -49,8 +49,16 @@ typedef /*unsigned long long*/uint64_t uint64;
 
 #define MASK_SET(byte, mask) (byte) |= (mask)
 #define MASK_CLEAR(byte, mask) (byte) &= ~(mask)
+#define MASK_TOGGLE(byte, mask) (byte) ^= (mask)
+#define MASK_GET(byte, mask) (byte) & (mask)
 
 #define INTERRUPTS_ENABLED GBI(STATUS_REG, INTERRUPTS_FLAG)
+
+#define INITIALIZE_CHECKING() \
+	static BOOL isInitialized = FALSE; \
+	if (isInitialized) \
+		return; \
+	isInitialized = !FALSE
 
 // ////////////////////////////////////////
 // Constants

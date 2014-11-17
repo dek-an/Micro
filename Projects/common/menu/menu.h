@@ -2,7 +2,7 @@
 #define _MENU_H_
 
 #include <common/commonHeader.h>
-#include <common/rtos/libRtos.h>
+#include <common/rtos/rtos.h>
 
 // //////////////////////////////////////////////////////////
 // Menu Macroses
@@ -38,7 +38,7 @@ typedef struct MenuObject
 
 extern const MenuItem EMPTY_MENU_ITEM;
 
-extern void initMenu(void);
+extern void initMenu(void) __attribute__((always_inline));
 extern void startMenu(MenuObject* menu, const MenuItemPtr head);
 extern void resetMenu(MenuObject* menu);
 extern void menuNext(MenuObject* menu);
