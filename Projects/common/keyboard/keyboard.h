@@ -1,7 +1,8 @@
 #ifndef _KEYBOARD_H_
 #define _KEYBOARD_H_
 
-#include <common/rtos/rtosLib.h>
+#include "keyboardDef.h"
+#include <common/rtos/rtos.h>
 
 typedef uint08 KeyType;
 

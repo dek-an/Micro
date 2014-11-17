@@ -27,9 +27,4 @@
 // Keyboard timer task period (ms)
 #define KBD_TIMER_TASK_TIME 100
 
-#define KBD_KEY_NEXT	KBD_KEY_1
-#define KBD_KEY_PREV	KBD_KEY_2
-#define KBD_KEY_OK		KBD_KEY_3
-#define KBD_KEY_CANCEL	KBD_KEY_4
-
 #endif // _KEYBOARDDEF_H_

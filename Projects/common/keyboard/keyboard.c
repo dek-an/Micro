@@ -36,6 +36,7 @@ void kbdTimerTask(const TaskParameter param)
 
 	// if no pressed keys
 	uint08 kbdPin = KBD_PIN;
+	kbdPin &= KBD_MASK;
 	MASK_TOGGLE(kbdPin, KBD_MASK);
 	if (!kbdPin)
 		return;
@@ -46,6 +47,10 @@ void kbdTimerTask(const TaskParameter param)
 		const KeyType currentKey = m_keys[thisKeyHandlerPos];
 		if (KBD_EMPTY_HANDLER == currentKey) // we didn't found necessary handler before in registered handlers
 			return;
+
+		// TEST
+		PORTB = GBI(KBD_PIN, currentKey);
+		// TEST
 
 		if (!GBI(KBD_PIN, currentKey)) // this key pressed
 			break;
