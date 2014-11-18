@@ -36,7 +36,7 @@ static void addUpdateTimerTask(const Task timerTask, const TaskParameter param, 
 static void updateTimers(void);
 
 // //////////////////////////////////////////////////////////
-// Interface
+// Interface Implementation
 //
 void initRtos(void)
 {
