@@ -50,6 +50,30 @@ void lcdWriteStrProgMem(const char* str)
 	LCDstr_of_flash((const uint8_t*)str);
 }
 
+static const char PROGMEM_DIGITS[] PROGMEM = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
+
+void lcdWriteUint16(uint16 val)
+{
+	uint16 invertedVal = 0;
+	uint08 i = 0;
+	for (; val; val /= 10, ++i)
+	{
+		invertedVal = (invertedVal + val % 10) * 10;
+	}
+
+	invertedVal /= 10;
+
+	for (; invertedVal; invertedVal /= 10, --i)
+	{
+		lcdWriteChar(pgm_read_byte(&PROGMEM_DIGITS[invertedVal % 10]));
+	}
+
+	for (; i > 0; --i)
+	{
+		lcdWriteChar(pgm_read_byte(&PROGMEM_DIGITS[0]));
+	}
+}
+
 #else // !LCD_USE_THIRDPARTY
 #include <util/delay.h>
 
@@ -83,8 +107,8 @@ static inline char getCommand();
 // ///////////////////////////////////////////////
 // LCD Defines
 //
-#define LCD_DATA_MASK SFT(LCD_DB7) | SFT(LCD_DB6) | SFT(LCD_DB5) | SFT(LCD_DB4)
-#define LCD_SIG_MASK SFT(LCD_RW) | SFT(LCD_RS) | SFT(LCD_E)
+#define LCD_DATA_MASK (SFT(LCD_DB7) | SFT(LCD_DB6) | SFT(LCD_DB5) | SFT(LCD_DB4))
+#define LCD_SIG_MASK (SFT(LCD_RW) | SFT(LCD_RS) | SFT(LCD_E))
 #define LCD_BF LCD_DB7
 
 // //////////////////////////////////////////////////////////

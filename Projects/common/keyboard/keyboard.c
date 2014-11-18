@@ -8,7 +8,7 @@
 static KeyType m_keys[KBD_KEYS_NUMBER];
 static Task m_handlers[KBD_KEYS_NUMBER];
 
-#define KBD_EMPTY_HANDLER 0xFF
+#define KBD_KEY_EMPTY 0xFF
 
 void initKeyboard(void)
 {
@@ -20,7 +20,7 @@ void initKeyboard(void)
 
 	for (uint08 i = 0; i < KBD_KEYS_NUMBER; ++i)
 	{
-		m_keys[i] = KBD_EMPTY_HANDLER;
+		m_keys[i] = KBD_KEY_EMPTY;
 		m_handlers[i] = &idleTask;
 	}
 }
@@ -28,31 +28,28 @@ void initKeyboard(void)
 void kbdTimerTask(const TaskParameter param)
 {
 	// kbdTimerTask is periodic task; set kbdTimerTask task
-	setTimerTaskMS(&kbdTimerTask, 0, KBD_TIMER_TASK_TIME);
+	setTimerTaskMS(&kbdTimerTask, 0, KBD_TIMER_TASK_PERIOD);
 
 	// if no registered handlers
-	if (KBD_EMPTY_HANDLER == m_keys[0])
+	if (KBD_KEY_EMPTY == m_keys[0])
 		return;
 
 	// if no pressed keys
 	uint08 kbdPin = KBD_PIN;
-	kbdPin &= KBD_MASK;
-	MASK_TOGGLE(kbdPin, KBD_MASK);
+	MASK_CLEAR(kbdPin, !KBD_MASK); // clear all except mask
+	MASK_TOGGLE(kbdPin, KBD_MASK); // toggle pins so "key pressed" = 1
 	if (!kbdPin)
 		return;
 
 	uint08 thisKeyHandlerPos = 0;
+	KeyType currentKey = KBD_KEY_EMPTY;
 	for (; thisKeyHandlerPos < KBD_KEYS_NUMBER; ++thisKeyHandlerPos)
 	{
-		const KeyType currentKey = m_keys[thisKeyHandlerPos];
-		if (KBD_EMPTY_HANDLER == currentKey) // we didn't found necessary handler before in registered handlers
+		currentKey = m_keys[thisKeyHandlerPos];
+		if (KBD_KEY_EMPTY == currentKey) // we didn't found necessary handler before in registered handlers
 			return;
 
-		// TEST
-		PORTB = GBI(KBD_PIN, currentKey);
-		// TEST
-
-		if (!GBI(KBD_PIN, currentKey)) // this key pressed
+		if (GBI(kbdPin, currentKey)) // this key pressed
 			break;
 	}
 
@@ -60,7 +57,7 @@ void kbdTimerTask(const TaskParameter param)
 	if (thisKeyHandlerPos >= KBD_KEYS_NUMBER)
 		return;
 
-	setTask(m_handlers[thisKeyHandlerPos], 0);
+	setTask(m_handlers[thisKeyHandlerPos], currentKey);
 }
 
 extern void kbdRegisterKeyHandler(const KeyType key, Task handler)
@@ -73,7 +70,7 @@ extern void kbdRegisterKeyHandler(const KeyType key, Task handler)
 		if (currentKey == key) // handler for this key already registered; update it
 			break;
 
-		if (currentKey == KBD_EMPTY_HANDLER)
+		if (currentKey == KBD_KEY_EMPTY)
 			break;
 	}
 

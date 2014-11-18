@@ -38,7 +38,7 @@ typedef struct MenuObject
 
 extern const MenuItem EMPTY_MENU_ITEM;
 
-extern void initMenu(void) __attribute__((always_inline));
+extern void initMenu(void) /*__attribute__((always_inline))*/;
 extern void startMenu(MenuObject* menu, const MenuItemPtr head);
 extern void resetMenu(MenuObject* menu);
 extern void menuNext(MenuObject* menu);

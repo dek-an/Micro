@@ -19,12 +19,9 @@
 
 // Every new key should be added here
 #define KBD_MASK \
-	SFT(KBD_KEY_1)\
-	| SFT(KBD_KEY_2)\
-	| SFT(KBD_KEY_3)\
-	| SFT(KBD_KEY_4)
+	(SFT(KBD_KEY_1) | SFT(KBD_KEY_2) | SFT(KBD_KEY_3) | SFT(KBD_KEY_4))
 
 // Keyboard timer task period (ms)
-#define KBD_TIMER_TASK_TIME 100
+#define KBD_TIMER_TASK_PERIOD 150
 
 #endif // _KEYBOARDDEF_H_

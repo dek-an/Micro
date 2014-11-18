@@ -16,7 +16,7 @@ extern void idleTask(const TaskParameter);
 // Interface
 //
 // should be called once
-extern void initRtos(void) __attribute__((always_inline));
+extern void initRtos(void) /*__attribute__((always_inline))*/;
 
 // called from everywhere (also from interrupts)
 extern void setTask(const Task task, const TaskParameter param);
@@ -25,11 +25,11 @@ extern void setTask(const Task task, const TaskParameter param);
 extern void setTimerTaskMS(const Task task, const TaskParameter param, const uint16 timeMS);
 
 // called from main loop only
-extern void taskManager(void) __attribute__((always_inline));
+extern void taskManager(void) /*__attribute__((always_inline))*/;
 
 // called from timer interrupt;
 // timer tasks removed from timers task set, so for task cycling it should be
 // re-added to the timer set in the task
-extern void timerService(void) __attribute__((always_inline));
+extern void timerService(void) /*__attribute__((always_inline))*/;
 
 #endif // _LIBRTOS_H_

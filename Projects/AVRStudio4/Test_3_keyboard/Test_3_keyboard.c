@@ -7,36 +7,68 @@
 #define KBD_KEY_OK		KBD_KEY_3
 #define KBD_KEY_CANCEL	KBD_KEY_4
 
+//#define SIMULATOR
+
 void idleTask(TaskParameter param) {}
 
 void keyNextHandler(TaskParameter param)
 {
+#ifndef SIMULATOR
 	lcdClear();
 	lcdWriteStr("NEXT pressed");
+
+	static uint16 times = 0;
+	++times;
+	lcdGoTo(1, 0);
+	lcdWriteUint16(times);
+#endif
 }
 
 void keyPrevHandler(TaskParameter param)
 {
+#ifndef SIMULATOR
 	lcdClear();
 	lcdWriteStr("PREV pressed");
+
+	static uint16 times = 0;
+	++times;
+	lcdGoTo(1, 0);
+	lcdWriteUint16(times);
+#endif
 }
 
 void keyOKHandler(TaskParameter param)
 {
+#ifndef SIMULATOR
 	lcdClear();
 	lcdWriteStr("OK pressed");
+
+	static uint16 times = 0;
+	++times;
+	lcdGoTo(1, 0);
+	lcdWriteUint16(times);
+#endif
 }
 
 void keyCancelHandler(TaskParameter param)
 {
+#ifndef SIMULATOR
 	lcdClear();
 	lcdWriteStr("CANCEL pressed");
+
+	static uint16 times = 0;
+	++times;
+	lcdGoTo(1, 0);
+	lcdWriteUint16(times);
+#endif
 }
 
 int main(void)
 {
 	initRtos();
-	//initLcd();
+#ifndef SIMULATOR
+	initLcd();
+#endif
 	initKeyboard();
 
 	kbdRegisterKeyHandler(KBD_KEY_NEXT, &keyNextHandler);
@@ -44,17 +76,19 @@ int main(void)
 	kbdRegisterKeyHandler(KBD_KEY_OK, &keyOKHandler);
 	kbdRegisterKeyHandler(KBD_KEY_CANCEL, &keyCancelHandler);
 
-	setTimerTaskMS(&kbdTimerTask, 0, 5000);
+	setTimerTaskMS(&kbdTimerTask, 0, 2000);
 
-	//lcdWriteStr("KEYBOARD TEST");
-	//_delay_ms(2000);
-	//lcdClear();
+#ifndef SIMULATOR
+	lcdWriteStr("KEYBOARD TEST");
+#endif
 
 	SEI();
 
 	for (;;)
 	{
+#ifdef SIMULATOR
 		kbdTimerTask(0);
+#endif
 		taskManager();
 	}
 
