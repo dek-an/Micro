@@ -118,6 +118,11 @@ void menuStepIn(MenuObject* menu)
 	}
 }
 
+BOOL menuIsHead(MenuObject* menu)
+{
+	return menuItemIsHead(menu->m_currentItem);
+}
+
 // //////////////////////////////////////////////////////////
 // Helpers Defines
 //
@@ -142,7 +147,7 @@ static inline BOOL menuIsInvoked(const MenuObject* menu)
 
 static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurrent)
 {
-	if (newCurrent == EMPTY_MENU_ITEM_PTR || newCurrent == menu->m_currentItem)
+	if (newCurrent == EMPTY_MENU_ITEM_PTR)
 		return;
 
 	menu->m_currentItem = newCurrent;

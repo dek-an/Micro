@@ -14,6 +14,8 @@
 	extern const MenuItem child; \
 	const MenuItem name = {(const MenuItemPtr)&next, (const MenuItemPtr)&previous, (const MenuItemPtr)&parent, (const MenuItemPtr)&child, task, { text }}
 
+#define MENU_ITEM_CPTR(menuItem) (const MenuItemPtr)(&(menuItem))
+
 // //////////////////////////////////////////////////////////
 // Menu Types
 //
@@ -45,6 +47,7 @@ extern void menuNext(MenuObject* menu);
 extern void menuPrev(MenuObject* menu);
 extern void menuStepOut(MenuObject* menu);
 extern void menuStepIn(MenuObject* menu);
+extern BOOL menuIsHead(MenuObject* menu);
 
 extern void updateMenuTask(const TaskParameter param);
 

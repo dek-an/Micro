@@ -1,11 +1,7 @@
-
+#include "program.h"
 
 int main(void)
 {
-	for (;;)
-	{
-		
-	}
-
-	return 0;
+	initProgram();
+	return programRun();
 }
