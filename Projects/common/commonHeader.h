@@ -63,6 +63,8 @@ typedef /*unsigned long long*/uint64_t uint64;
 // ////////////////////////////////////////
 // Constants
 //
-static const uchar EMPTY_STRING[] PROGMEM = "";
+static const char EMPTY_STRING[] PROGMEM = "";
+static const char PROGMEM_DIGITS[] PROGMEM = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
+#define GET_PROGMEM_DIGIT(digit) pgm_read_byte(&PROGMEM_DIGITS[digit])
 
 #endif // _COMMONHEADER_H_

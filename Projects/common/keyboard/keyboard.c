@@ -7,6 +7,7 @@
 // keys and handlers add one by one
 static KeyType m_keys[KBD_KEYS_NUMBER];
 static Task m_handlers[KBD_KEYS_NUMBER];
+static uint08 m_handlersCnt = 0;
 
 #define KBD_KEY_EMPTY 0xFF
 
@@ -23,6 +24,10 @@ void initKeyboard(void)
 		m_keys[i] = KBD_KEY_EMPTY;
 		m_handlers[i] = &idleTask;
 	}
+
+	m_handlersCnt = 0;
+
+	setTimerTaskMS(&kbdTimerTask, 0, KBD_TIMER_TASK_PERIOD);
 }
 
 void kbdTimerTask(const TaskParameter param)
@@ -31,7 +36,7 @@ void kbdTimerTask(const TaskParameter param)
 	setTimerTaskMS(&kbdTimerTask, 0, KBD_TIMER_TASK_PERIOD);
 
 	// if no registered handlers
-	if (KBD_KEY_EMPTY == m_keys[0])
+	if (!m_handlersCnt)
 		return;
 
 	// if no pressed keys
@@ -41,43 +46,40 @@ void kbdTimerTask(const TaskParameter param)
 	if (!kbdPin)
 		return;
 
+	// find handler for pressed key
 	uint08 thisKeyHandlerPos = 0;
-	KeyType currentKey = KBD_KEY_EMPTY;
-	for (; thisKeyHandlerPos < KBD_KEYS_NUMBER; ++thisKeyHandlerPos)
+	for (; thisKeyHandlerPos < m_handlersCnt; ++thisKeyHandlerPos)
 	{
-		currentKey = m_keys[thisKeyHandlerPos];
-		if (KBD_KEY_EMPTY == currentKey) // we didn't found necessary handler before in registered handlers
-			return;
-
-		if (GBI(kbdPin, currentKey)) // this key pressed
+		if (GBI(kbdPin, m_keys[thisKeyHandlerPos])) // this key pressed
 			break;
 	}
 
 	// if there is no handler for this key
-	if (thisKeyHandlerPos >= KBD_KEYS_NUMBER)
+	if (thisKeyHandlerPos >= m_handlersCnt)
 		return;
 
-	setTask(m_handlers[thisKeyHandlerPos], currentKey);
+	setTask(m_handlers[thisKeyHandlerPos], m_keys[thisKeyHandlerPos]);
 }
 
 extern void kbdRegisterKeyHandler(const KeyType key, Task handler)
 {
+	// find handler if exist
 	uint08 handlerPos = 0;
-	// find last empty position for handler
-	for (; handlerPos < KBD_KEYS_NUMBER; ++handlerPos)
+	for (; handlerPos < m_handlersCnt; ++handlerPos)
 	{
-		const KeyType currentKey = m_keys[handlerPos];
-		if (currentKey == key) // handler for this key already registered; update it
-			break;
-
-		if (currentKey == KBD_KEY_EMPTY)
+		if (key == m_keys[handlerPos]) // handler for this key already registered; update it
 			break;
 	}
 
-	// if there is no empty place
-	if (handlerPos >= KBD_KEYS_NUMBER)
-		return;
-
-	m_keys[handlerPos] = key;
-	m_handlers[handlerPos] = handler;
+	if (handlerPos < m_handlersCnt) // if handler for this key exist then update
+	{
+		m_keys[handlerPos] = key;
+		m_handlers[handlerPos] = handler;
+	}
+	else if (m_handlersCnt < KBD_KEYS_NUMBER) // if there is no handler for this key and handlers storage is not full
+	{
+		m_keys[m_handlersCnt] = key;
+		m_handlers[m_handlersCnt] = handler;
+		++m_handlersCnt;
+	}
 }

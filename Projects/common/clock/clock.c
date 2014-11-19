@@ -1,6 +1,8 @@
 #include "clock.h"
 
+#include <common/commonHeader.h>
 #include <common/rtos/rtos.h>
+#include <string.h> // for strcpy
 
 // //////////////////////////////////////////////////////////
 // Helpers
@@ -14,38 +16,62 @@ static uint32 m_time = 0; // in seconds
 
 void initClock(void)
 {
+	INITIALIZE_CHECKING();
+
 	m_time = 0;
 	setTimerTaskMS(&clockTimerTask, 0, 1000);
 }
 
 void setClock(const uint08 hours, const uint08 minutes, const uint08 seconds)
 {
-	m_time = (hours % 24) * 3600 + (minutes % 60) * 60 + (seconds % 60);
+	m_time = ((uint32)hours % 24) * 3600 + ((uint32)minutes % 60) * 60 + ((uint32)seconds % 60);
 }
 
-//void setHours(const uint08 hours)
-//{
-//	
-//}
-
-//void setMinutes(const uint08 minutes)
-//{
-//	
-//}
-
-//void setSeconds(const uint08 seconds)
-//{
-//	
-//}
-
-const char* getTimeStrProgmem(void)
+void sethours(const uint08 hours)
 {
-	return "";
+	setClock(hours, getMinutes(), getSeconds());
 }
 
-const char* getTimeStrHoursMinutesProgMem(void)
+void setMinutes(const uint08 minutes)
 {
-	return "";
+	setClock(getHours(), minutes, getSeconds());
+}
+
+void setSeconds(const uint08 seconds)
+{
+	setClock(getHours(), getMinutes(), seconds);
+}
+
+// returns str of length 9 (with zero symbol)
+const char* getTimeStr(void)
+{
+	static char timeStrBuff[9];
+
+	strcpy(timeStrBuff, getTimeStrHoursMinutes());
+	timeStrBuff[5] = ':';
+	const uint08 seconds = getSeconds();
+	timeStrBuff[6] = GET_PROGMEM_DIGIT(seconds / 10);
+	timeStrBuff[7] = GET_PROGMEM_DIGIT(seconds % 10);
+	timeStrBuff[8] = '\0';
+
+	return timeStrBuff;
+}
+
+// returns str of length 6 (with zero symbol)
+const char* getTimeStrHoursMinutes(void)
+{
+	static char timeStrBuff[6];
+
+	const uint08 hours = getHours();
+	timeStrBuff[0] = GET_PROGMEM_DIGIT(hours / 10);
+	timeStrBuff[1] = GET_PROGMEM_DIGIT(hours % 10);
+	timeStrBuff[2] = ':';
+	const uint08 minutes = getMinutes();
+	timeStrBuff[3] = GET_PROGMEM_DIGIT(minutes / 10);
+	timeStrBuff[4] = GET_PROGMEM_DIGIT(minutes % 10);
+	timeStrBuff[5] = '\0';
+
+	return timeStrBuff;
 }
 
 uint08 getHours(void)
@@ -55,12 +81,12 @@ uint08 getHours(void)
 
 uint08 getMinutes(void)
 {
-	return (m_time % 3600) / 60;
+	return (uint08)((m_time % 3600) / 60);
 }
 
 uint08 getSeconds(void)
 {
-	return (m_time % 3600) % 60;
+	return (uint08)((m_time % 3600) % 60);
 }
 
 // //////////////////////////////////////////////////////////

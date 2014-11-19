@@ -12,6 +12,8 @@
 
 void initLcd(void)
 {
+	INITIALIZE_CHECKING();
+
 	LCDinit();
 }
 
@@ -50,8 +52,6 @@ void lcdWriteStrProgMem(const char* str)
 	LCDstr_of_flash((const uint8_t*)str);
 }
 
-static const char PROGMEM_DIGITS[] PROGMEM = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
-
 void lcdWriteUint16(uint16 val)
 {
 	uint16 invertedVal = 0;
@@ -65,12 +65,12 @@ void lcdWriteUint16(uint16 val)
 
 	for (; invertedVal; invertedVal /= 10, --i)
 	{
-		lcdWriteChar(pgm_read_byte(&PROGMEM_DIGITS[invertedVal % 10]));
+		lcdWriteChar(GET_PROGMEM_DIGIT(invertedVal % 10));
 	}
 
 	for (; i > 0; --i)
 	{
-		lcdWriteChar(pgm_read_byte(&PROGMEM_DIGITS[0]));
+		lcdWriteChar(GET_PROGMEM_DIGIT(0));
 	}
 }
 
