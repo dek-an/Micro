@@ -27,7 +27,7 @@ void setClock(const uint08 hours, const uint08 minutes, const uint08 seconds)
 	m_time = ((uint32)hours % 24) * 3600 + ((uint32)minutes % 60) * 60 + ((uint32)seconds % 60);
 }
 
-void sethours(const uint08 hours)
+void setHours(const uint08 hours)
 {
 	setClock(hours, getMinutes(), getSeconds());
 }
@@ -91,22 +91,34 @@ uint08 getSeconds(void)
 
 uint08 increase24(const uint08 val)
 {
-	return (++val % 24);
+	if (val == 23)
+		return 0;
+
+	return ((val + 1) % 24);
 }
 
 uint08 increase60(const uint08 val)
 {
-	return (++val % 60);
+	if (val == 59)
+		return 0;
+
+	return ((val + 1) % 60);
 }
 
 uint08 decrease24(const uint08 val)
 {
-	return (--val % 24);
+	if (val == 0)
+		return 23;
+
+	return ((val - 1) % 24);
 }
 
 uint08 decrease60(const uint08 val)
 {
-	return (--val % 60);
+	if (val == 0)
+		return 59;
+
+	return ((val - 1) % 60);
 }
 
 // //////////////////////////////////////////////////////////

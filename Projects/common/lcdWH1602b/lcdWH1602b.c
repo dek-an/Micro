@@ -1,6 +1,8 @@
 #include "lcdWH1602b.h"
 #include "lcdWH1602bDef.h"
 
+#include <stdio.h>
+
 #define LCD_USE_THIRDPARTY
 
 // //////////////////////////////////////////////////////////
@@ -54,24 +56,10 @@ void lcdWriteStrProgMem(const char* str)
 
 void lcdWriteUint16(uint16 val)
 {
-	uint16 invertedVal = 0;
-	uint08 i = 0;
-	for (; val; val /= 10, ++i)
-	{
-		invertedVal = (invertedVal + val % 10) * 10;
-	}
+	char buffer[6];
+	sprintf(buffer, "%d", val);
 
-	invertedVal /= 10;
-
-	for (; invertedVal; invertedVal /= 10, --i)
-	{
-		lcdWriteChar(GET_PROGMEM_DIGIT(invertedVal % 10));
-	}
-
-	for (; i > 0; --i)
-	{
-		lcdWriteChar(GET_PROGMEM_DIGIT(0));
-	}
+	lcdWriteStr(buffer);
 }
 
 #else // !LCD_USE_THIRDPARTY

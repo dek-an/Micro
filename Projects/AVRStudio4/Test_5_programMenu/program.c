@@ -105,9 +105,9 @@ static uint08 m_progFlag = 0;
 #define IN_MENU_OFF() CBI(m_progFlag, IN_MENU_BIT)
 // IN KEY HANDLER
 #define IN_MENU_TASK_BIT 1
-#define IN_MENU_TASK GBI(m_progFlag, IN_MENU_BIT)
-#define IN_MENU_TASK_ON() SBI(m_progFlag, IN_MENU_BIT)
-#define IN_MENU_TASK_OFF() CBI(m_progFlag, IN_MENU_BIT)
+#define IN_MENU_TASK GBI(m_progFlag, IN_MENU_TASK_BIT)
+#define IN_MENU_TASK_ON() SBI(m_progFlag, IN_MENU_TASK_BIT)
+#define IN_MENU_TASK_OFF() CBI(m_progFlag, IN_MENU_TASK_BIT)
 
 static void displayProgram(const TaskParameter param)
 {
@@ -152,7 +152,7 @@ static void miSetHoursTask(const TaskParameter param)
 			setHours(m_changedHours);
 			keyCancelPressed(KBD_KEY_CANCEL);
 			break;
-		case KBD_KEY_CANCEL
+		case KBD_KEY_CANCEL:
 			m_changedHours = 0;
 			IN_MENU_TASK_OFF();
 			return; // do not write current setting to lcd
@@ -191,7 +191,7 @@ static void miSetMinutesTask(const TaskParameter param)
 			setMinutes(m_changedMinutes);
 			keyCancelPressed(KBD_KEY_CANCEL);
 			break;
-		case KBD_KEY_CANCEL
+		case KBD_KEY_CANCEL:
 			m_changedMinutes = 0;
 			IN_MENU_TASK_OFF();
 			return; // do not write current setting to lcd
@@ -230,7 +230,7 @@ static void miSetSecondsTask(const TaskParameter param)
 			setSeconds(m_changedSeconds);
 			keyCancelPressed(KBD_KEY_CANCEL);
 			break;
-		case KBD_KEY_CANCEL
+		case KBD_KEY_CANCEL:
 			m_changedSeconds = 0;
 			IN_MENU_TASK_OFF();
 			return; // do not write current setting to lcd
