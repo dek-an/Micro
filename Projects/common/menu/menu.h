@@ -35,7 +35,7 @@ typedef struct MenuObject
 	MenuItemPtr m_menuHead;
 	MenuItemPtr m_currentItem;
 	MenuItemPtr m_lastDisplayed;
-	BOOL m_isInvoked;
+	Task m_invokedTask;
 } MenuObject;
 
 extern const MenuItem EMPTY_MENU_ITEM;
@@ -43,12 +43,13 @@ extern const MenuItem EMPTY_MENU_ITEM;
 extern void initMenu(void) /*__attribute__((always_inline))*/;
 extern void startMenu(MenuObject* menu, const MenuItemPtr head);
 extern void resetMenu(MenuObject* menu);
-extern void menuNext(MenuObject* menu);
-extern void menuPrev(MenuObject* menu);
-extern void menuStepOut(MenuObject* menu);
-extern void menuStepIn(MenuObject* menu);
 extern BOOL menuIsHead(MenuObject* menu);
+// use param in next 4 methods to send key number
+extern void menuNext(MenuObject* menu, const TaskParameter param);
+extern void menuPrev(MenuObject* menu, const TaskParameter param);
+extern void menuStepOut(MenuObject* menu, const TaskParameter param);
+extern void menuStepIn(MenuObject* menu, const TaskParameter param);
 
-extern void updateMenuTask(const TaskParameter param);
+extern void updateMenuTask(const TaskParameter param); // should be private?
 
 #endif // _MENU_H_

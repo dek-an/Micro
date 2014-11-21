@@ -17,6 +17,14 @@ void idleTask(const TaskParameter param) {}
 #define DISPLAY_PROGRAM_TASK_TIME 1000
 
 // //////////////////////////////////////////////////////////
+// Constants
+//
+static const char menuStr[] PROGMEM = "MENU";
+static const char hoursStr[] PROGMEM = "Hours: ";
+static const char minutesStr[] PROGMEM = "Minutes: ";
+static const char secondsStr[] PROGMEM = "Seconds: ";
+
+// //////////////////////////////////////////////////////////
 // Tasks
 //
 static void miSetHoursTask(const TaskParameter param);
@@ -90,10 +98,16 @@ int programRun(void)
 //
 static uint08 m_progFlag = 0;
 // flags
+// IN MENU
 #define IN_MENU_BIT 0
 #define IN_MENU GBI(m_progFlag, IN_MENU_BIT)
 #define IN_MENU_ON() SBI(m_progFlag, IN_MENU_BIT)
 #define IN_MENU_OFF() CBI(m_progFlag, IN_MENU_BIT)
+// IN KEY HANDLER
+#define IN_MENU_TASK_BIT 1
+#define IN_MENU_TASK GBI(m_progFlag, IN_MENU_BIT)
+#define IN_MENU_TASK_ON() SBI(m_progFlag, IN_MENU_BIT)
+#define IN_MENU_TASK_OFF() CBI(m_progFlag, IN_MENU_BIT)
 
 static void displayProgram(const TaskParameter param)
 {
@@ -106,7 +120,6 @@ static void displayProgram(const TaskParameter param)
 	lcdWriteStr(getTimeStr());
 
 	lcdGoTo(1, 0);
-	static const char menuStr[] PROGMEM = "MENU";
 	lcdWriteStrProgMem(menuStr);
 }
 
@@ -115,20 +128,119 @@ static void displayProgram(const TaskParameter param)
 //
 static void miSetHoursTask(const TaskParameter param)
 {
+	static uint08 m_changedHours = 0;
+
+	if (!IN_MENU_TASK) // if first visit
+	{
+		if (KBD_KEY_OK != param)
+			return;
+
+		m_changedHours = getHours();
+		IN_MENU_TASK_ON();
+	}
+	else // if already here
+	{
+		switch (param)
+		{
+		case KBD_KEY_NEXT:
+			m_changedHours = increase24(m_changedHours);
+			break;
+		case KBD_KEY_PREV:
+			m_changedHours = decrease24(m_changedHours);
+			break;
+		case KBD_KEY_OK:
+			setHours(m_changedHours);
+			keyCancelPressed(KBD_KEY_CANCEL);
+			break;
+		case KBD_KEY_CANCEL
+			m_changedHours = 0;
+			IN_MENU_TASK_OFF();
+			return; // do not write current setting to lcd
+		}
+	}
+
+	// write current setting to lcd
 	lcdClear();
-	lcdWriteStr("In SetHours");
+	lcdWriteStrProgMem(hoursStr);
+	lcdWriteUint16(m_changedHours);
 }
 
 static void miSetMinutesTask(const TaskParameter param)
 {
+	static uint08 m_changedMinutes = 0;
+
+	if (!IN_MENU_TASK) // if first visit
+	{
+		if (KBD_KEY_OK != param)
+			return;
+
+		m_changedMinutes = getMinutes();
+		IN_MENU_TASK_ON();
+	}
+	else // if already here
+	{
+		switch (param)
+		{
+		case KBD_KEY_NEXT:
+			m_changedMinutes = increase60(m_changedMinutes);
+			break;
+		case KBD_KEY_PREV:
+			m_changedMinutes = decrease60(m_changedMinutes);
+			break;
+		case KBD_KEY_OK:
+			setMinutes(m_changedMinutes);
+			keyCancelPressed(KBD_KEY_CANCEL);
+			break;
+		case KBD_KEY_CANCEL
+			m_changedMinutes = 0;
+			IN_MENU_TASK_OFF();
+			return; // do not write current setting to lcd
+		}
+	}
+
+	// write current setting to lcd
 	lcdClear();
-	lcdWriteStr("In SetMinutes");
+	lcdWriteStrProgMem(minutesStr);
+	lcdWriteUint16(m_changedMinutes);
 }
 
 static void miSetSecondsTask(const TaskParameter param)
 {
+	static uint08 m_changedSeconds = 0;
+
+	if (!IN_MENU_TASK) // if first visit
+	{
+		if (KBD_KEY_OK != param)
+			return;
+
+		m_changedSeconds = getSeconds();
+		IN_MENU_TASK_ON();
+	}
+	else // if already here
+	{
+		switch (param)
+		{
+		case KBD_KEY_NEXT:
+			m_changedSeconds = increase60(m_changedSeconds);
+			break;
+		case KBD_KEY_PREV:
+			m_changedSeconds = decrease60(m_changedSeconds);
+			break;
+		case KBD_KEY_OK:
+			setSeconds(m_changedSeconds);
+			keyCancelPressed(KBD_KEY_CANCEL);
+			break;
+		case KBD_KEY_CANCEL
+			m_changedSeconds = 0;
+			IN_MENU_TASK_OFF();
+			return; // do not write current setting to lcd
+		}
+	}
+
+	// write current setting to lcd
 	lcdClear();
-	lcdWriteStr("In SetSeconds");
+	lcdWriteStrProgMem(secondsStr);
+	lcdWriteUint16(m_changedSeconds);
 }
 
 static void keyNextPreseed(const TaskParameter param)
@@ -136,7 +248,7 @@ static void keyNextPreseed(const TaskParameter param)
 	if (!IN_MENU)
 		return;
 
-	menuNext(m_pmPtr);
+	menuNext(m_pmPtr, param);
 }
 
 static void keyPrevPressed(const TaskParameter param)
@@ -144,14 +256,14 @@ static void keyPrevPressed(const TaskParameter param)
 	if (!IN_MENU)
 		return;
 
-	menuPrev(m_pmPtr);
+	menuPrev(m_pmPtr, param);
 }
 
 static void keyOkPressed(const TaskParameter param)
 {
 	if (IN_MENU)
 	{
-		menuStepIn(m_pmPtr);
+		menuStepIn(m_pmPtr, param);
 	}
 	else
 	{
@@ -173,6 +285,6 @@ static void keyCancelPressed(const TaskParameter param)
 	}
 	else
 	{
-		menuStepOut(m_pmPtr);
+		menuStepOut(m_pmPtr, param);
 	}
 }

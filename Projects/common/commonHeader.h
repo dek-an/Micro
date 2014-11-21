@@ -45,12 +45,12 @@ typedef /*unsigned long long*/uint64_t uint64;
 #define SBI(byte, bit) (byte) |= SFT(bit)
 #define CBI(byte, bit) (byte) &= ~SFT(bit)
 #define TBI(byte, bit) (byte) ^= SFT(bit)
-#define GBI(byte, bit) ((byte) >> (bit)) & 1
+#define GBI(byte, bit) (((byte) >> (bit)) & 1)
 
 #define MASK_SET(byte, mask) (byte) |= (mask)
 #define MASK_CLEAR(byte, mask) (byte) &= ~(mask)
 #define MASK_TOGGLE(byte, mask) (byte) ^= (mask)
-#define MASK_GET(byte, mask) (byte) & (mask)
+#define MASK_GET(byte, mask) ((byte) & (mask))
 
 #define INTERRUPTS_ENABLED GBI(STATUS_REG, INTERRUPTS_FLAG)
 

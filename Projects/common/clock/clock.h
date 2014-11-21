@@ -24,4 +24,9 @@ extern uint08 getHours(void);
 extern uint08 getMinutes(void);
 extern uint08 getSeconds(void);
 
+extern uint08 increase24(const uint08 val);
+extern uint08 increase60(const uint08 val);
+extern uint08 decrease24(const uint08 val);
+extern uint08 decrease60(const uint08 val);
+
 #endif // _CLOCK_H_

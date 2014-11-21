@@ -22,6 +22,8 @@ static inline BOOL menuItemIsHead(const MenuItemPtr menuItem);
 static inline BOOL menuItemIsEmpty(const MenuItemPtr menuItem);
 static inline BOOL menuIsInvoked(const MenuObject* menu);
 static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurrent);
+static inline void clearInvokedTask(MenuObject* menu);
+static inline void setInvokedTask(MenuObject* menu, Task task);
 static void displayMenu(MenuObject* menu);
 
 // //////////////////////////////////////////////////////////
@@ -40,28 +42,30 @@ void startMenu(MenuObject* menu, const MenuItemPtr head)
 {
 	menu->m_menuHead = head;
 	menu->m_lastDisplayed = EMPTY_MENU_ITEM_PTR;
-	menu->m_isInvoked = FALSE;
+	clearInvokedTask(menu);
 
 	updateCurrentItem(menu, head);
 }
 
 void updateMenuTask(const TaskParameter param)
 {
-	MenuObject* menu = (MenuObject*)param;
-	displayMenu(menu);
+	displayMenu((MenuObject*)param);
 }
 
 void resetMenu(MenuObject* menu)
 {
-	menu->m_isInvoked = FALSE;
+	clearInvokedTask(menu);
 	menu->m_lastDisplayed = EMPTY_MENU_ITEM_PTR;
 	updateCurrentItem(menu, menu->m_menuHead);
 }
 
-void menuNext(MenuObject* menu)
+void menuNext(MenuObject* menu, const TaskParameter param)
 {
 	if (menuIsInvoked(menu))
+	{
+		setTask(menu->m_invokedTask, param);
 		return;
+	}
 
 	const MenuItemPtr next = MENU_ITEM_GET_NEXT(menu->m_currentItem);
 	if (menuItemIsEmpty(next))
@@ -70,10 +74,13 @@ void menuNext(MenuObject* menu)
 	updateCurrentItem(menu, next);
 }
 
-void menuPrev(MenuObject* menu)
+void menuPrev(MenuObject* menu, const TaskParameter param)
 {
 	if (menuIsInvoked(menu))
+	{
+		setTask(menu->m_invokedTask, param);
 		return;
+	}
 
 	const MenuItemPtr prev = MENU_ITEM_GET_PREVIOUS(menu->m_currentItem);
 	if (menuItemIsEmpty(prev))
@@ -82,11 +89,12 @@ void menuPrev(MenuObject* menu)
 	updateCurrentItem(menu, prev);
 }
 
-void menuStepOut(MenuObject* menu)
+void menuStepOut(MenuObject* menu, const TaskParameter param)
 {
 	if (menuIsInvoked(menu))
 	{
-		menu->m_isInvoked = FALSE;
+		setTask(menu->m_invokedTask, param);
+		clearInvokedTask(menu);
 		setTask(&updateMenuTask, (const TaskParameter)menu);
 	}
 	else
@@ -99,17 +107,23 @@ void menuStepOut(MenuObject* menu)
 	}
 }
 
-void menuStepIn(MenuObject* menu)
+void menuStepIn(MenuObject* menu, const TaskParameter param)
 {
+	if (menuIsInvoked(menu))
+	{
+		setTask(menu->m_invokedTask, param);
+		return;
+	}
+
 	const MenuItemPtr child = MENU_ITEM_GET_CHILD(menu->m_currentItem);
 	if (menuItemIsEmpty(child)) // if this is lowest item
 	{
 		const Task currentTask = MENU_ITEM_GET_TASK(menu->m_currentItem);
 		if (currentTask != &idleTask)
 		{
-			menu->m_isInvoked = !FALSE;
+			setInvokedTask(menu, currentTask);
 			menu->m_lastDisplayed = EMPTY_MENU_ITEM_PTR;
-			setTask(currentTask, (const TaskParameter)menu);
+			setTask(currentTask, param);
 		}
 	}
 	else
@@ -142,7 +156,7 @@ static inline BOOL menuItemIsEmpty(const MenuItemPtr menuItem)
 
 static inline BOOL menuIsInvoked(const MenuObject* menu)
 {
-	return menu->m_isInvoked;
+	return (menu->m_invokedTask != &idleTask);
 }
 
 static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurrent)
@@ -152,6 +166,16 @@ static inline void updateCurrentItem(MenuObject* menu, const MenuItemPtr newCurr
 
 	menu->m_currentItem = newCurrent;
 	setTask(&updateMenuTask, (const TaskParameter)menu);
+}
+
+static inline void clearInvokedTask(MenuObject* menu)
+{
+	menu->m_invokedTask = &idleTask;
+}
+
+static inline void setInvokedTask(MenuObject* menu, Task task)
+{
+	menu->m_invokedTask = task;
 }
 
 static void displayMenu(MenuObject* menu)

@@ -89,6 +89,26 @@ uint08 getSeconds(void)
 	return (uint08)((m_time % 3600) % 60);
 }
 
+uint08 increase24(const uint08 val)
+{
+	return (++val % 24);
+}
+
+uint08 increase60(const uint08 val)
+{
+	return (++val % 60);
+}
+
+uint08 decrease24(const uint08 val)
+{
+	return (--val % 24);
+}
+
+uint08 decrease60(const uint08 val)
+{
+	return (--val % 60);
+}
+
 // //////////////////////////////////////////////////////////
 // Helpers Implementation
 //
