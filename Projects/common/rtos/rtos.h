@@ -1,6 +1,7 @@
 #ifndef _LIBRTOS_H_
 #define _LIBRTOS_H_
 
+#include "rtosDef.h"
 #include <common/commonHeader.h>
 
 // //////////////////////////////////////////////////////////
@@ -30,6 +31,6 @@ extern void taskManager(void) /*__attribute__((always_inline))*/;
 // called from timer interrupt;
 // timer tasks removed from timers task set, so for task cycling it should be
 // re-added to the timer set in the task
-extern void timerService(void) /*__attribute__((always_inline))*/;
+extern void timerService(const TaskParameter param) /*__attribute__((always_inline))*/;
 
 #endif // _LIBRTOS_H_

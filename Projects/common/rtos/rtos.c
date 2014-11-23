@@ -1,13 +1,12 @@
 #include "rtos.h"
-#include "rtosDef.h"
+
+// prescaler = 64
+#define RTOS_TIMER_OCR F_CPU / 64000 * RTOS_TIMER_TICK_LENGTH_MS
 
 // //////////////////////////////////////////////////////////
 // Timer Interrupt
 //
-ISR(TIMER2_COMP_vect)
-{
-	timerService();
-}
+ISR(TIMER0_COMP_vect);
 
 // //////////////////////////////////////////////////////////
 // Task Queue
@@ -45,14 +44,16 @@ void initRtos(void)
 	initTaskQueue();
 	initTimerTaskSet();
 
-	// set timer
-	// Clear Timer on Compare match; WGM21:0 = 10
-	// prescaler 1024; CS22:0 = 111
-	TCCR2 = SFT(WGM21) | SFT(CS22) | SFT(CS21) | SFT(CS20);
+	// set timer TC0
+	// Clear Timer on Compare match; WGM01:0 = 10
+	// prescaler 64; CS02:0 = 011
+	TCCR0 = SFT(WGM01) | SFT(CS01) | SFT(CS00);
+	// reset counter
+	TCNT0 = 0;
 	// set Output Compare Register value
-	OCR2 = RTOS_TIMER_OCR;
-	// TC2 Output Compare Math Interrupt Enable
-	SBI(TIMSK, OCIE2);
+	OCR0 = RTOS_TIMER_OCR;
+	// Output Compare Math Interrupt Enable
+	SBI(TIMSK, OCIE0);
 }
 
 // called from everywhere (also from interrupts)
@@ -87,7 +88,7 @@ void taskManager(void)
 }
 
 // called from timer interrupt
-void timerService(void)
+void timerService(const TaskParameter param)
 {
 	updateTimers();
 }
@@ -229,4 +230,12 @@ static inline void updateTimers(void)
 			m_timerTaskSetBuffer[i].m_time -= RTOS_TIMER_TICK_LENGTH_MS;
 		}
 	}
+}
+
+// //////////////////////////////////////////////////////////
+// Timer Interrupt
+//
+ISR(TIMER0_COMP_vect)
+{
+	setTask(&timerService, 0);
 }
