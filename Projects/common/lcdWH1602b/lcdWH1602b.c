@@ -54,11 +54,17 @@ void lcdWriteStrProgMem(const char* str)
 	LCDstr_of_flash((const uint8_t*)str);
 }
 
+static char buffer[6];
+
+void lcdWriteUint08(uint08 val)
+{
+	sprintf(buffer, "%d", val);
+	lcdWriteStr(buffer);
+}
+
 void lcdWriteUint16(uint16 val)
 {
-	char buffer[6];
 	sprintf(buffer, "%d", val);
-
 	lcdWriteStr(buffer);
 }
 

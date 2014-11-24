@@ -12,6 +12,7 @@ extern void lcdClear(void);
 extern void lcdGoTo(uint08 line, uint08 col);
 
 extern void lcdWriteStrProgMem(const char* str);
+extern void lcdWriteUint08(uint08 val);
 extern void lcdWriteUint16(uint16 val);
 
 #endif // _LCDWH1602B_H_

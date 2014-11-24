@@ -40,7 +40,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 INCLUDES = -I"D:\Andrii\Micro\Projects\AVRStudio4\Test_5_programMenu\..\.." 
 
 ## Objects that must be built in order to link
-OBJECTS = Test_5_programMenu.o LCD.o clock.o keyboard.o lcdWH1602b.o menu.o rtos.o program.o 
+OBJECTS = Test_5_programMenu.o LCD.o clock.o keyboard.o lcdWH1602b.o menu.o rtos.o program.o eepromConstants.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -69,6 +69,9 @@ rtos.o: ../../../common/rtos/rtos.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 program.o: ../program.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+eepromConstants.o: ../eepromConstants.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link
