@@ -23,6 +23,11 @@ void idleTask(const TaskParameter param) {}
 #define FAN_PIN PINC
 #define FAN_BIT 0
 
+#define LIGHT_PORT PORTC
+#define LIGHT_DDR DDRC
+#define LIGHT_PIN PINC
+#define LIGHT_BIT 0
+
 // //////////////////////////////////////////////////////////
 // Constants
 //
@@ -32,7 +37,10 @@ static const char minutesStr[] PROGMEM = "Minutes:";
 static const char secondsStr[] PROGMEM = "Seconds:";
 static const char fanOnStr[] PROGMEM = "Fan ON Temp:";
 static const char fanOffStr[] PROGMEM = "Fan OFF Temp:";
+static const char lightOnStr[] PROGMEM = "Light ON Time:";
+static const char lightOffStr[] PROGMEM = "Light OFF Time:";
 static const char fanStr[] PROGMEM = "Fan is:";
+static const char lightStr[] PROGMEM = "Light is:";
 static const char onStr[] PROGMEM = "ON";
 static const char offStr[] PROGMEM = "OFF";
 
@@ -44,6 +52,8 @@ static void miSetMinutesTask(const TaskParameter param);
 static void miSetSecondsTask(const TaskParameter param);
 static void miSetFanOnTempTask(const TaskParameter param);
 static void miSetFanOffTempTask(const TaskParameter param);
+static void miSetLightOnTimeTask(const TaskParameter param);
+static void miSetLightOffTimeTask(const TaskParameter param);
 static void miFunctFanOnOff(const TaskParameter param);
 
 static void keyNextPreseed(const TaskParameter param);
@@ -67,7 +77,8 @@ MENU_MAKE_ITEM(	miSettings,		EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	miT
 MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
 // 2 Settings
 MENU_MAKE_ITEM(	miTimeSettings,	miFanSettings,		EMPTY_MENU_ITEM,	miSettings,			miSetHours,			&idleTask,				"Time Settings");
-MENU_MAKE_ITEM(	miFanSettings,	EMPTY_MENU_ITEM,	miTimeSettings,		miSettings,			miSetFanOnTemp,		&idleTask,				"Fan Settings");
+MENU_MAKE_ITEM(	miFanSettings,	miLightSettings,	miTimeSettings,		miSettings,			miSetFanOnTemp,		&idleTask,				"Fan Settings");
+MENU_MAKE_ITEM(	miLightSettings,EMPTY_MENU_ITEM,	miFanSettings,		miSettings,			miSetLightOnTime,	&idleTask,				"Light Settings");
 // 3 Time Settings
 MENU_MAKE_ITEM(	miSetHours,		miSetMinutes,		EMPTY_MENU_ITEM,	miTimeSettings,		EMPTY_MENU_ITEM,	&miSetHoursTask,		"Set Hours");
 MENU_MAKE_ITEM(	miSetMinutes,	miSetSeconds,		miSetHours,			miTimeSettings,		EMPTY_MENU_ITEM,	&miSetMinutesTask,		"Set Minutes");
@@ -75,6 +86,9 @@ MENU_MAKE_ITEM(	miSetSeconds,	EMPTY_MENU_ITEM,	miSetMinutes,		miTimeSettings,		E
 // 3 Fan Settings
 MENU_MAKE_ITEM(	miSetFanOnTemp,	miSetFanOffTemp,	EMPTY_MENU_ITEM,	miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOnTempTask,	"Set ON Temp");
 MENU_MAKE_ITEM(	miSetFanOffTemp,EMPTY_MENU_ITEM,	miSetFanOnTemp,		miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOffTempTask,	"Set OFF Temp");
+// 3 Light Settings
+MENU_MAKE_ITEM(	miSetLightOnTime,miSetLightOffTime,	EMPTY_MENU_ITEM,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOnTimeTask,	"Set ON Time");
+MENU_MAKE_ITEM(	miSetLightOffTime,EMPTY_MENU_ITEM,	miSetLightOffTime,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOffTimeTask,	"Set OFF Time")
 
 static MenuObject m_programMenu;
 static MenuObject* m_pmPtr = &m_programMenu;
@@ -157,8 +171,8 @@ typedef uint08 (*Uint08Getter)(void);
 typedef void (*Uint08Setter)(const uint08);
 typedef uint08 (*Uint08UpChanger)(const uint08);
 typedef uint08 (*Uint08DownChanger)(const uint08);
-
-static uint08 m_changedValue = 0;
+typedef uint32 (*TimeGetter)(void);
+typedef void (*TimeSetter)(const uint32);
 
 static inline uint08 increment(const uint08 val)
 {
@@ -170,7 +184,7 @@ static inline uint08 decrement(const uint08 val)
 	return val - 1;
 }
 
-static void changeValue(
+static void changeUint08Value(
 	TaskParameter param,
 	Uint08Getter getter,
 	Uint08Setter setter,
@@ -178,12 +192,14 @@ static void changeValue(
 	Uint08DownChanger downChanger,
 	const char* strProgMem)
 {
+	static uint08 changedValue = 0;
+
 	if (!IN_MENU_TASK) // if first visit
 	{
 		if (KBD_KEY_OK != param)
 			return;
 
-		m_changedValue = getter();
+		changedValue = getter();
 		IN_MENU_TASK_ON();
 	}
 	else // if already here
@@ -191,17 +207,17 @@ static void changeValue(
 		switch (param)
 		{
 		case KBD_KEY_NEXT:
-			m_changedValue = upChanger(m_changedValue);
+			changedValue = upChanger(changedValue);
 			break;
 		case KBD_KEY_PREV:
-			m_changedValue = downChanger(m_changedValue);
+			changedValue = downChanger(changedValue);
 			break;
 		case KBD_KEY_OK:
-			setter(m_changedValue);
+			setter(changedValue);
 			keyCancelPressed(KBD_KEY_CANCEL);
 			break;
 		case KBD_KEY_CANCEL:
-			m_changedValue = 0;
+			changedValue = 0;
 			IN_MENU_TASK_OFF();
 			return; // do not write current setting to lcd
 		}
@@ -210,13 +226,83 @@ static void changeValue(
 	lcdClear();
 	lcdWriteStrProgMem(strProgMem);
 	lcdGoTo(1, 1);
-	lcdWriteUint08(m_changedValue);
+	lcdWriteUint08(changedValue);
+}
+
+static void changeTimeValue(TimeGetter tmGetter, TimeSetter tmSetter)
+{
+	static uint32 changedTime = 0;
+	static const char* currentStr = 0x00;
+	static uint08 currentVal = 0;
+
+	if (!IN_MENU_TASK) // if first visit
+	{
+		if (KBD_KEY_OK != param)
+			return;
+
+		changedTime = tmGetter();
+		currentStr = hoursStr;
+		currentVal = getHoursFrom(changedTime);
+
+		IN_MENU_TASK_ON();
+	}
+	else // if already here
+	{
+		switch (param)
+		{
+		case KBD_KEY_NEXT:
+			if (hoursStr == currentStr) // if hours
+			{
+				currentVal = increase24(currentVal);
+			}
+			else // if minutes
+			{
+				currentVal = increase60(currentVal);
+			}
+			break;
+		case KBD_KEY_PREV:
+			if (hoursStr == currentStr) // if hours
+			{
+				currentVal = decrease24(currentVal);
+			}
+			else // if minutes
+			{
+				currentVal = decrease60(currentVal);
+			}
+			break;
+		case KBD_KEY_OK:
+			if (hoursStr == currentStr) // if hours
+			{
+				updateHours(changedTime, currentVal);
+				currentStr = minutesStr;
+			}
+			else // if minutes
+			{
+				updateMinutes(changedTime, currentVal);
+				tmSetter(changedTime);
+
+				keyCancelPressed(KBD_KEY_CANCEL);
+			}
+			break;
+		case KBD_KEY_CANCEL:
+			changedTime = 0;
+			currentStr = 0x00;
+			currentVal = 0;
+			IN_MENU_TASK_OFF();
+			return; // do not write current setting to lcd
+		}
+	}
+
+	lcdClear();
+	lcdWriteStrProgMem(currentStr);
+	lcdGoTo(1, 1);
+	lcdWriteUint08(currentVal);
 }
 
 // Tasks
 static void miSetHoursTask(const TaskParameter param)
 {
-	changeValue(
+	changeUint08Value(
 		param,
 		&getHours,
 		&setHours,
@@ -227,7 +313,7 @@ static void miSetHoursTask(const TaskParameter param)
 
 static void miSetMinutesTask(const TaskParameter param)
 {
-	changeValue(
+	changeUint08Value(
 		param,
 		&getMinutes,
 		&setMinutes,
@@ -238,7 +324,7 @@ static void miSetMinutesTask(const TaskParameter param)
 
 static void miSetSecondsTask(const TaskParameter param)
 {
-	changeValue(
+	changeUint08Value(
 		param,
 		&getSeconds,
 		&setSeconds,
@@ -249,7 +335,7 @@ static void miSetSecondsTask(const TaskParameter param)
 
 static void miSetFanOnTempTask(const TaskParameter param)
 {
-	changeValue(
+	changeUint08Value(
 		param,
 		&getFanOnTemperature,
 		&setFanOnTemperature,
@@ -260,13 +346,23 @@ static void miSetFanOnTempTask(const TaskParameter param)
 
 static void miSetFanOffTempTask(const TaskParameter param)
 {
-	changeValue(
+	changeUint08Value(
 		param,
 		&getFanOffTemperature,
 		&setFanOffTemperature,
 		&increment,
 		&decrement,
 		fanOffStr);
+}
+
+static void miSetLightOnTimeTask(const TaskParameter param)
+{
+	changeTimeValue(&getLightOnTime, &setLightOnTime);
+}
+
+static void miSetLightOffTimeTask(const TaskParameter param)
+{
+	changeTimeValue(&getLightOffTime, &setLightOffTime);
 }
 
 static void miFunctFanOnOff(const TaskParameter param)

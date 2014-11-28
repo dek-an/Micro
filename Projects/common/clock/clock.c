@@ -55,8 +55,7 @@ void initClock(void)
 
 void setClock(const uint08 hours, const uint08 minutes, const uint08 seconds)
 {
-	const uint32 newTime = ((uint32)hours % 24) * 3600 + ((uint32)minutes % 60) * 60 + ((uint32)seconds % 60);
-	setTime(newTime);
+	setTime(getTimeFrom(hours, minutes, seconds));
 }
 
 void setHours(const uint08 hours)
@@ -108,18 +107,24 @@ const char* getTimeStrHoursMinutes(void)
 
 uint08 getHours(void)
 {
-	return (uint08)(getTime() / 3600);
+	return getHoursFrom(getTime());
 }
 
 uint08 getMinutes(void)
 {
-	return (uint08)((getTime() % 3600) / 60);
+	return getMinutesFrom(getTime());
 }
 
 uint08 getSeconds(void)
 {
-	return (uint08)((getTime() % 3600) % 60);
+	return getSecondsFrom(getTime());
 }
+
+uint32 getRawTime(void)
+{
+	return getTime();
+}
+
 
 uint08 increase24(const uint08 val)
 {
@@ -151,6 +156,41 @@ uint08 decrease60(const uint08 val)
 		return 59;
 
 	return ((val - 1) % 60);
+}
+
+uint08 getHoursFrom(const uint32 time)
+{
+	return (uint08)(time / 3600);
+}
+
+uint08 getMinutesFrom(const uint32 time)
+{
+	return (uint08)((time % 3600) / 60);
+}
+
+uint08 getSecondsFrom(const uint32 time)
+{
+	return (uint08)((time % 3600) % 60);
+}
+
+uint32 getTimeFrom(const uint08 hours, const uint08 minutes, const uint08 seconds)
+{
+	return ((uint32)hours % 24) * 3600 + ((uint32)minutes % 60) * 60 + ((uint32)seconds % 60);
+}
+
+uint32 updateHours(const uint32 time, const uint08 hours)
+{
+	return getTimeFrom(hours, getMinutesFrom(time), getSecondsFrom(time));
+}
+
+uint32 updateMinutes(const uint32 time, const uint08 minutes)
+{
+	return getTimeFrom(getHoursFrom(time), minutes, getSecondsFrom(time));
+}
+
+uint32 updateSeconds(const uint32 time, const uint08 seconds)
+{
+	return getTimeFrom(getHoursFrom(time), getMinutesFrom(time), seconds);
 }
 
 // //////////////////////////////////////////////////////////

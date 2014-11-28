@@ -24,9 +24,21 @@ extern uint08 getHours(void);
 extern uint08 getMinutes(void);
 extern uint08 getSeconds(void);
 
+extern uint32 getRawTime(void);
+
+// static functions
 extern uint08 increase24(const uint08 val);
 extern uint08 increase60(const uint08 val);
 extern uint08 decrease24(const uint08 val);
 extern uint08 decrease60(const uint08 val);
+
+extern uint08 getHoursFrom(const uint32 time);
+extern uint08 getMinutesFrom(const uint32 time);
+extern uint08 getSecondsFrom(const uint32 time);
+extern uint32 getTimeFrom(const uint08 hours, const uint08 minutes, const uint08 seconds);
+
+extern uint32 updateHours(const uint32 time, const uint08 hours);
+extern uint32 updateMinutes(const uint32 time, const uint08 minutes);
+extern uint32 updateSeconds(const uint32 time, const uint08 seconds);
 
 #endif // _CLOCK_H_
