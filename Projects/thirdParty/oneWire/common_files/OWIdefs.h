@@ -21,7 +21,7 @@
 #ifndef _OWI_DEFS_H_
 #define _OWI_DEFS_H_
 
-#include "compilers.h"
+#include "../compilers.h"
 
 
 /****************************************************************************

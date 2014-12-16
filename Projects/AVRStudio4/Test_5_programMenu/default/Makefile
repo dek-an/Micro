@@ -15,7 +15,7 @@ COMMON = -mmcu=$(MCU)
 
 ## Compile options common for all C compilation units.
 CFLAGS = $(COMMON)
-CFLAGS += -Wall -gdwarf-2 -Os -std=gnu99 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CFLAGS += -Wall -gdwarf-2 -Os -std=gnu99 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums 
 CFLAGS += -MD -MP -MT $(*F).o -MF dep/$(@F).d 
 
 ## Assembly specific flags
@@ -40,7 +40,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 INCLUDES = -I"D:\Andrii\Micro\Projects\AVRStudio4\Test_5_programMenu\..\.." 
 
 ## Objects that must be built in order to link
-OBJECTS = Test_5_programMenu.o LCD.o clock.o keyboard.o lcdWH1602b.o menu.o rtos.o program.o eepromConstants.o 
+OBJECTS = Test_5_programMenu.o LCD.o clock.o keyboard.o lcdWH1602b.o menu.o rtos.o program.o eepromConstants.o OWIcrc.o OWIUARTBitFunctions.o OWIHighLevelFunctions.o OWISWBitFunctions.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -72,6 +72,18 @@ program.o: ../program.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 eepromConstants.o: ../eepromConstants.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+OWIcrc.o: ../../../thirdParty/oneWire/common_files/OWIcrc.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+OWIUARTBitFunctions.o: ../../../thirdParty/oneWire/OWIUARTBitFunctions.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+OWIHighLevelFunctions.o: ../../../thirdParty/oneWire/OWIHighLevelFunctions.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+OWISWBitFunctions.o: ../../../thirdParty/oneWire/OWISWBitFunctions.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link

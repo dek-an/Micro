@@ -13,9 +13,7 @@ uint08 getFanOnTemperature(void)
 
 void setFanOnTemperature(const uint08 temp)
 {
-	const uint08 fanOffTemp = getFanOffTemperature();
-	eeprom_update_byte(&m_fanOnTemp,
-		temp > fanOffTemp ? temp : fanOffTemp + 1);
+	eeprom_update_byte(&m_fanOnTemp, temp);
 }
 
 uint08 getFanOffTemperature(void)
@@ -25,9 +23,7 @@ uint08 getFanOffTemperature(void)
 
 void setFanOffTemperature(const uint08 temp)
 {
-	const uint08 fanOnTemp = getFanOnTemperature();
-	eeprom_update_byte(&m_fanOffTemp,
-		temp < fanOnTemp ? temp : fanOnTemp - 1);
+	eeprom_update_byte(&m_fanOffTemp, temp);
 }
 
 // //////////////////////////////////////////////////////////

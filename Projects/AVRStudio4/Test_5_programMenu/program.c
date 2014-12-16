@@ -4,6 +4,8 @@
 #include <common/keyboard/keyboard.h>
 #include <common/clock/clock.h>
 
+#include <stdio.h>
+
 #include "eepromConstants.h"
 
 void idleTask(const TaskParameter param) {}
@@ -28,7 +30,7 @@ void idleTask(const TaskParameter param) {}
 #define LIGHT_PORT PORTC
 #define LIGHT_DDR DDRC
 #define LIGHT_PIN PINC
-#define LIGHT_BIT 0
+#define LIGHT_BIT 1
 
 // //////////////////////////////////////////////////////////
 // Constants
@@ -79,8 +81,8 @@ static void checkFan(const TaskParameter param);
 MENU_MAKE_ITEM(	miFunctions,	miSettings,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miLightFunctions,	&idleTask,				"Functions");
 MENU_MAKE_ITEM(	miSettings,		EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	miTimeSettings,		&idleTask,				"Settings");
 // 2 Functions
-MENU_MAKE_ITEM(	miLightFunctions,miFanFunctions,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctLightOnOff,		"Fan ON/OFF");
-MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	miLightFunctions,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
+MENU_MAKE_ITEM(	miLightFunctions,miFanFunctions,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
+MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	miLightFunctions,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctLightOnOff,		"Light ON/OFF");
 // 2 Settings
 MENU_MAKE_ITEM(	miTimeSettings,	miFanSettings,		EMPTY_MENU_ITEM,	miSettings,			miSetHours,			&idleTask,				"Time Settings");
 MENU_MAKE_ITEM(	miFanSettings,	miLightSettings,	miTimeSettings,		miSettings,			miSetFanOnTemp,		&idleTask,				"Fan Settings");
@@ -94,7 +96,7 @@ MENU_MAKE_ITEM(	miSetFanOnTemp,	miSetFanOffTemp,	EMPTY_MENU_ITEM,	miFanSettings,
 MENU_MAKE_ITEM(	miSetFanOffTemp,EMPTY_MENU_ITEM,	miSetFanOnTemp,		miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOffTempTask,	"Set OFF Temp");
 // 3 Light Settings
 MENU_MAKE_ITEM(	miSetLightOnTime,miSetLightOffTime,	EMPTY_MENU_ITEM,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOnTimeTask,	"Set ON Time");
-MENU_MAKE_ITEM(	miSetLightOffTime,EMPTY_MENU_ITEM,	miSetLightOffTime,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOffTimeTask,	"Set OFF Time")
+MENU_MAKE_ITEM(	miSetLightOffTime,EMPTY_MENU_ITEM,	miSetLightOffTime,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOffTimeTask,	"Set OFF Time");
 
 static MenuObject m_programMenu;
 static MenuObject* m_pmPtr = &m_programMenu;
@@ -128,9 +130,9 @@ void initProgram(void)
 	startMenu(m_pmPtr, MENU_ITEM_CPTR(miFunctions));
 
 	// set tasks
-	setTimerTaskMS(&displayProgram, 0, DISPLAY_PROGRAM_TASK_TIME);
-	setTimerTaskMS(&checkLight, 0, CHECK_LIGHT_TASK_TIME);
-	setTimerTaskMS(&checkFan, 0, CHECK_FAN_TASK_TIME);
+	setTimerTaskMS(&displayProgram, 0, 100/*DISPLAY_PROGRAM_TASK_TIME*/);
+	setTimerTaskMS(&checkLight, 0, 200/*CHECK_LIGHT_TASK_TIME*/);
+	setTimerTaskMS(&checkFan, 0, 300/*CHECK_FAN_TASK_TIME*/);
 
 	SEI();
 }
@@ -149,8 +151,8 @@ int programRun(void)
 // Helpers Implementation
 //
 static uint08 m_currentTemp = 0;
-static uint32 m_lightOnTime = getLightOnTime();
-static uint32 m_lightOffTime = getLightOffTime();
+static uint32 m_lightOnTime = 0;//getLightOnTime();
+static uint32 m_lightOffTime = 0;//getLightOffTime();
 
 static uint08 m_progFlag = 0;
 // flags
@@ -167,11 +169,14 @@ static void displayProgram(const TaskParameter param)
 {
 	setTimerTaskMS(&displayProgram, 0, DISPLAY_PROGRAM_TASK_TIME);
 
-	if (IN_MENU)
+	if (IN_MENU())
 		return;
 
 	lcdClear();
-	lcdWriteStr(getTimeStr());
+
+	static char strBuff[16];
+	sprintf(strBuff, "%s %d %d %d", getTimeStr(), m_currentTemp, getFanOnTemperature(), getFanOffTemperature());
+	lcdWriteStr(strBuff);
 
 	lcdGoTo(1, 0);
 	lcdWriteStrProgMem(menuStr);
@@ -181,16 +186,18 @@ static void checkLight(const TaskParameter param)
 {
 	setTimerTaskMS(&checkLight, 0, CHECK_LIGHT_TASK_TIME);
 
+	const uint32 currentTime = getRawTime();
+
 	if (m_lightOnTime < m_lightOffTime)
 	{
 		// off
-		if (LIGHT_IS_ON && currentTime >= m_lightOffTime)
+		if (LIGHT_IS_ON() && currentTime >= m_lightOffTime)
 		{
 			CBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_OFF();
 		}
 		// on
-		else if (!LIGHT_IS_ON && m_lightOnTime <= currentTime && currentTime < m_lightOffTime)
+		else if (!LIGHT_IS_ON() && m_lightOnTime <= currentTime && currentTime < m_lightOffTime)
 		{
 			SBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_ON();
@@ -199,13 +206,13 @@ static void checkLight(const TaskParameter param)
 	else
 	{
 		// off
-		if (LIGHT_IS_ON && m_lightOffTime <= currentTime && currentTime < m_lightOnTime)
+		if (LIGHT_IS_ON() && m_lightOffTime <= currentTime && currentTime < m_lightOnTime)
 		{
 			CBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_OFF();
 		}
 		// on
-		else if (!LIGHT_IS_ON && (m_lightOnTime <= currentTime || currentTime < m_lightOffTime))
+		else if (!LIGHT_IS_ON() && (m_lightOnTime <= currentTime || currentTime < m_lightOffTime))
 		{
 			SBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_ON();
@@ -218,13 +225,13 @@ static void checkFan(const TaskParameter param)
 	setTimerTaskMS(&checkFan, 0, CHECK_FAN_TASK_TIME);
 
 	// off
-	if (m_currentTemp <= getFanOffTemperature() && FAN_IS_ON)
+	if (m_currentTemp <= getFanOffTemperature() && FAN_IS_ON())
 	{
 		CBI(FAN_PORT, FAN_PIN);
 		FAN_IS_ON_OFF();
 	}
 	// on
-	else if (m_currentTemp >= getFanOnTemperature() && !FAN_IS_ON)
+	else if (m_currentTemp >= getFanOnTemperature() && !FAN_IS_ON())
 	{
 		SBI(FAN_PORT, FAN_PIN);
 		FAN_IS_ON_ON();
@@ -262,7 +269,7 @@ static void changeUint08Value(
 {
 	static uint08 changedValue = 0;
 
-	if (!IN_MENU_TASK) // if first visit
+	if (!IN_MENU_TASK()) // if first visit
 	{
 		if (KBD_KEY_OK != param)
 			return;
@@ -297,13 +304,13 @@ static void changeUint08Value(
 	lcdWriteUint08(changedValue);
 }
 
-static void changeTimeValue(TimeGetter tmGetter, TimeSetter tmSetter)
+static void changeTimeValue(const TaskParameter param, TimeGetter tmGetter, TimeSetter tmSetter)
 {
 	static uint32 changedTime = 0;
 	static const char* currentStr = 0x00;
 	static uint08 currentVal = 0;
 
-	if (!IN_MENU_TASK) // if first visit
+	if (!IN_MENU_TASK()) // if first visit
 	{
 		if (KBD_KEY_OK != param)
 			return;
@@ -367,11 +374,11 @@ static void changeTimeValue(TimeGetter tmGetter, TimeSetter tmSetter)
 	lcdWriteUint08(currentVal);
 }
 
-static void changeOnOffValue(const uint08* port, counst uint08 bit, const char* str)
+static void changeOnOffValue(const TaskParameter param, volatile uint08* port, const uint08 bit, const char* str)
 {
 	static const char* currentStateStr = 0x00;
 
-	if (!IN_MENU_TASK) // if first visit
+	if (!IN_MENU_TASK()) // if first visit
 	{
 		if (KBD_KEY_OK != param)
 			return;
@@ -484,30 +491,30 @@ static void miSetFanOffTempTask(const TaskParameter param)
 
 static void miSetLightOnTimeTask(const TaskParameter param)
 {
-	changeTimeValue(&getLightOnTime, &setLightOnTime);
+	changeTimeValue(param, &getLightOnTime, &setLightOnTime);
 	m_lightOnTime = getLightOnTime();
 }
 
 static void miSetLightOffTimeTask(const TaskParameter param)
 {
-	changeTimeValue(&getLightOffTime, &setLightOffTime);
+	changeTimeValue(param, &getLightOffTime, &setLightOffTime);
 	m_lightOffTime = getLightOffTime();
 }
 
 static void miFunctLightOnOff(const TaskParameter param)
 {
-	changeOnOffValue(&LIGHT_PORT, LIGHT_BIT, lightStr);
+	changeOnOffValue(param, &LIGHT_PORT, LIGHT_BIT, lightStr);
 }
 
 static void miFunctFanOnOff(const TaskParameter param)
 {
-	changeOnOffValue(&FAN_PORT, FAN_BIT, fanStr);
+	changeOnOffValue(param, &FAN_PORT, FAN_BIT, fanStr);
 }
 
 // Keys Tasks
 static void keyNextPreseed(const TaskParameter param)
 {
-	if (!IN_MENU)
+	if (!IN_MENU())
 		return;
 
 	menuNext(m_pmPtr, param);
@@ -515,7 +522,7 @@ static void keyNextPreseed(const TaskParameter param)
 
 static void keyPrevPressed(const TaskParameter param)
 {
-	if (!IN_MENU)
+	if (!IN_MENU())
 		return;
 
 	menuPrev(m_pmPtr, param);
@@ -523,7 +530,7 @@ static void keyPrevPressed(const TaskParameter param)
 
 static void keyOkPressed(const TaskParameter param)
 {
-	if (IN_MENU)
+	if (IN_MENU())
 	{
 		menuStepIn(m_pmPtr, param);
 	}
@@ -536,7 +543,7 @@ static void keyOkPressed(const TaskParameter param)
 
 static void keyCancelPressed(const TaskParameter param)
 {
-	if (!IN_MENU)
+	if (!IN_MENU())
 		return;
 
 	if (menuIsHead(m_pmPtr))
