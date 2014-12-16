@@ -17,6 +17,8 @@ void idleTask(const TaskParameter param) {}
 #define KBD_KEY_CANCEL	KBD_KEY_2
 
 #define DISPLAY_PROGRAM_TASK_TIME 1000
+#define CHECK_LIGHT_TASK_TIME 500
+#define CHECK_FAN_TASK_TIME 500
 
 #define FAN_PORT PORTC
 #define FAN_DDR DDRC
@@ -39,8 +41,8 @@ static const char fanOnStr[] PROGMEM = "Fan ON Temp:";
 static const char fanOffStr[] PROGMEM = "Fan OFF Temp:";
 static const char lightOnStr[] PROGMEM = "Light ON Time:";
 static const char lightOffStr[] PROGMEM = "Light OFF Time:";
-static const char fanStr[] PROGMEM = "Fan is:";
 static const char lightStr[] PROGMEM = "Light is:";
+static const char fanStr[] PROGMEM = "Fan is:";
 static const char onStr[] PROGMEM = "ON";
 static const char offStr[] PROGMEM = "OFF";
 
@@ -54,6 +56,7 @@ static void miSetFanOnTempTask(const TaskParameter param);
 static void miSetFanOffTempTask(const TaskParameter param);
 static void miSetLightOnTimeTask(const TaskParameter param);
 static void miSetLightOffTimeTask(const TaskParameter param);
+static void miFunctLightOnOff(const TaskParameter param);
 static void miFunctFanOnOff(const TaskParameter param);
 
 static void keyNextPreseed(const TaskParameter param);
@@ -65,16 +68,19 @@ static void keyCancelPressed(const TaskParameter param);
 // Helpers
 //
 static void displayProgram(const TaskParameter param);
+static void checkLight(const TaskParameter param);
+static void checkFan(const TaskParameter param);
 
 // //////////////////////////////////////////////////////////
 // MENU definition
 //
 //				NAME			NEXT				PREVIOUS			PARENT				CHILD				TASK					TEXT
 // 1
-MENU_MAKE_ITEM(	miFunctions,	miSettings,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miFanFunctions,		&idleTask,				"Functions");
+MENU_MAKE_ITEM(	miFunctions,	miSettings,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miLightFunctions,	&idleTask,				"Functions");
 MENU_MAKE_ITEM(	miSettings,		EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	miTimeSettings,		&idleTask,				"Settings");
 // 2 Functions
-MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
+MENU_MAKE_ITEM(	miLightFunctions,miFanFunctions,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctLightOnOff,		"Fan ON/OFF");
+MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	miLightFunctions,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
 // 2 Settings
 MENU_MAKE_ITEM(	miTimeSettings,	miFanSettings,		EMPTY_MENU_ITEM,	miSettings,			miSetHours,			&idleTask,				"Time Settings");
 MENU_MAKE_ITEM(	miFanSettings,	miLightSettings,	miTimeSettings,		miSettings,			miSetFanOnTemp,		&idleTask,				"Fan Settings");
@@ -102,9 +108,13 @@ void initProgram(void)
 	initLcd();
 	initClock();
 
-	// fan pin to out and off
+	// fan port pin to out and off
 	CBI(FAN_PORT, FAN_BIT);
 	SBI(FAN_DDR, FAN_BIT);
+
+	// light port pin to out and off
+	CBI(LIGHT_PORT, LIGHT_BIT);
+	SBI(LIGHT_DDR, LIGHT_BIT);
 
 	// keyboard
 	initKeyboard();
@@ -117,8 +127,10 @@ void initProgram(void)
 	initMenu();
 	startMenu(m_pmPtr, MENU_ITEM_CPTR(miFunctions));
 
-	// start
-	displayProgram(0);
+	// set tasks
+	setTimerTaskMS(&displayProgram, 0, DISPLAY_PROGRAM_TASK_TIME);
+	setTimerTaskMS(&checkLight, 0, CHECK_LIGHT_TASK_TIME);
+	setTimerTaskMS(&checkFan, 0, CHECK_FAN_TASK_TIME);
 
 	SEI();
 }
@@ -136,18 +148,20 @@ int programRun(void)
 // //////////////////////////////////////////////////////////
 // Helpers Implementation
 //
+static uint08 m_currentTemp = 0;
+static uint32 m_lightOnTime = getLightOnTime();
+static uint32 m_lightOffTime = getLightOffTime();
+
 static uint08 m_progFlag = 0;
 // flags
 // IN MENU
-#define IN_MENU_BIT 0
-#define IN_MENU GBI(m_progFlag, IN_MENU_BIT)
-#define IN_MENU_ON() SBI(m_progFlag, IN_MENU_BIT)
-#define IN_MENU_OFF() CBI(m_progFlag, IN_MENU_BIT)
-// IN KEY HANDLER
-#define IN_MENU_TASK_BIT 1
-#define IN_MENU_TASK GBI(m_progFlag, IN_MENU_TASK_BIT)
-#define IN_MENU_TASK_ON() SBI(m_progFlag, IN_MENU_TASK_BIT)
-#define IN_MENU_TASK_OFF() CBI(m_progFlag, IN_MENU_TASK_BIT)
+DECLARE_FLAG_BIT(m_progFlag, IN_MENU, 0)
+// In Menu Task handler
+DECLARE_FLAG_BIT(m_progFlag, IN_MENU_TASK, 1)
+// Light is on
+DECLARE_FLAG_BIT(m_progFlag, LIGHT_IS_ON, 2)
+// Fan is on
+DECLARE_FLAG_BIT(m_progFlag, FAN_IS_ON, 3)
 
 static void displayProgram(const TaskParameter param)
 {
@@ -161,6 +175,60 @@ static void displayProgram(const TaskParameter param)
 
 	lcdGoTo(1, 0);
 	lcdWriteStrProgMem(menuStr);
+}
+
+static void checkLight(const TaskParameter param)
+{
+	setTimerTaskMS(&checkLight, 0, CHECK_LIGHT_TASK_TIME);
+
+	if (m_lightOnTime < m_lightOffTime)
+	{
+		// off
+		if (LIGHT_IS_ON && currentTime >= m_lightOffTime)
+		{
+			CBI(LIGHT_PORT, LIGHT_PIN);
+			LIGHT_IS_ON_OFF();
+		}
+		// on
+		else if (!LIGHT_IS_ON && m_lightOnTime <= currentTime && currentTime < m_lightOffTime)
+		{
+			SBI(LIGHT_PORT, LIGHT_PIN);
+			LIGHT_IS_ON_ON();
+		}
+	}
+	else
+	{
+		// off
+		if (LIGHT_IS_ON && m_lightOffTime <= currentTime && currentTime < m_lightOnTime)
+		{
+			CBI(LIGHT_PORT, LIGHT_PIN);
+			LIGHT_IS_ON_OFF();
+		}
+		// on
+		else if (!LIGHT_IS_ON && (m_lightOnTime <= currentTime || currentTime < m_lightOffTime))
+		{
+			SBI(LIGHT_PORT, LIGHT_PIN);
+			LIGHT_IS_ON_ON();
+		}
+	}
+}
+
+static void checkFan(const TaskParameter param)
+{
+	setTimerTaskMS(&checkFan, 0, CHECK_FAN_TASK_TIME);
+
+	// off
+	if (m_currentTemp <= getFanOffTemperature() && FAN_IS_ON)
+	{
+		CBI(FAN_PORT, FAN_PIN);
+		FAN_IS_ON_OFF();
+	}
+	// on
+	else if (m_currentTemp >= getFanOnTemperature() && !FAN_IS_ON)
+	{
+		SBI(FAN_PORT, FAN_PIN);
+		FAN_IS_ON_ON();
+	}
 }
 
 // //////////////////////////////////////////////////////////
@@ -299,6 +367,65 @@ static void changeTimeValue(TimeGetter tmGetter, TimeSetter tmSetter)
 	lcdWriteUint08(currentVal);
 }
 
+static void changeOnOffValue(const uint08* port, counst uint08 bit, const char* str)
+{
+	static const char* currentStateStr = 0x00;
+
+	if (!IN_MENU_TASK) // if first visit
+	{
+		if (KBD_KEY_OK != param)
+			return;
+
+		if (GBI(*port, bit))
+		{
+			currentStateStr = onStr;
+		}
+		else
+		{
+			currentStateStr = offStr;
+		}
+
+		IN_MENU_TASK_ON();
+	}
+	else // if already here
+	{
+		switch (param)
+		{
+		case KBD_KEY_NEXT:
+		case KBD_KEY_PREV:
+			if (onStr == currentStateStr)
+			{
+				currentStateStr = offStr;
+			}
+			else
+			{
+				currentStateStr = onStr;
+			}
+			break;
+		case KBD_KEY_OK:
+			if (onStr == currentStateStr)
+			{
+				SBI(*port, bit);
+			}
+			else
+			{
+				CBI(*port, bit);
+			}
+			keyCancelPressed(KBD_KEY_CANCEL);
+			break;
+		case KBD_KEY_CANCEL:
+			currentStateStr = 0x00;
+			IN_MENU_TASK_OFF();
+			return; // do not write current setting to lcd
+		}
+	}
+
+	lcdClear();
+	lcdWriteStrProgMem(str);
+	lcdGoTo(1, 1);
+	lcdWriteStrProgMem(currentStateStr);
+}
+
 // Tasks
 static void miSetHoursTask(const TaskParameter param)
 {
@@ -358,70 +485,23 @@ static void miSetFanOffTempTask(const TaskParameter param)
 static void miSetLightOnTimeTask(const TaskParameter param)
 {
 	changeTimeValue(&getLightOnTime, &setLightOnTime);
+	m_lightOnTime = getLightOnTime();
 }
 
 static void miSetLightOffTimeTask(const TaskParameter param)
 {
 	changeTimeValue(&getLightOffTime, &setLightOffTime);
+	m_lightOffTime = getLightOffTime();
+}
+
+static void miFunctLightOnOff(const TaskParameter param)
+{
+	changeOnOffValue(&LIGHT_PORT, LIGHT_BIT, lightStr);
 }
 
 static void miFunctFanOnOff(const TaskParameter param)
 {
-	static const char* currentFanStateStr = 0x00;
-
-	if (!IN_MENU_TASK) // if first visit
-	{
-		if (KBD_KEY_OK != param)
-			return;
-
-		if (GBI(FAN_PORT, FAN_BIT))
-		{
-			currentFanStateStr = onStr;
-		}
-		else
-		{
-			currentFanStateStr = offStr;
-		}
-
-		IN_MENU_TASK_ON();
-	}
-	else // if already here
-	{
-		switch (param)
-		{
-		case KBD_KEY_NEXT:
-		case KBD_KEY_PREV:
-			if (onStr == currentFanStateStr)
-			{
-				currentFanStateStr = offStr;
-			}
-			else
-			{
-				currentFanStateStr = onStr;
-			}
-			break;
-		case KBD_KEY_OK:
-			if (onStr == currentFanStateStr)
-			{
-				SBI(FAN_PORT, FAN_BIT);
-			}
-			else
-			{
-				CBI(FAN_PORT, FAN_BIT);
-			}
-			keyCancelPressed(KBD_KEY_CANCEL);
-			break;
-		case KBD_KEY_CANCEL:
-			currentFanStateStr = 0x00;
-			IN_MENU_TASK_OFF();
-			return; // do not write current setting to lcd
-		}
-	}
-
-	lcdClear();
-	lcdWriteStrProgMem(fanStr);
-	lcdGoTo(1, 1);
-	lcdWriteStrProgMem(currentFanStateStr);
+	changeOnOffValue(&FAN_PORT, FAN_BIT, fanStr);
 }
 
 // Keys Tasks

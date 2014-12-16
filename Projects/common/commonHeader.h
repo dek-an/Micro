@@ -61,6 +61,12 @@ typedef /*unsigned long long*/uint64_t uint64;
 		return; \
 	isInitialized = !FALSE
 
+#define DECLARE_FLAG_BIT(flag, bit_name, bit_num) \
+	#define bit_name##_BIT bit_num \
+	#define bit_name GBI(flag, bit_num) \
+	#define bit_name##_ON() SBI(flag, bit_num) \
+	#define bit_name##_OFF() CBI(flag, bit_num)
+
 // ////////////////////////////////////////
 // Constants
 //

@@ -26,6 +26,9 @@ extern uint08 getSeconds(void);
 
 extern uint32 getRawTime(void);
 
+extern BOOL isTimeHMS(const uint32 time);
+extern BOOL isTimeHM(const uint32 time);
+
 // static functions
 extern uint08 increase24(const uint08 val);
 extern uint08 increase60(const uint08 val);

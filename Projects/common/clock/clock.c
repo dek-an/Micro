@@ -125,6 +125,28 @@ uint32 getRawTime(void)
 	return getTime();
 }
 
+BOOL isTimeHMS(const uint32 time)
+{
+	if (time == getTime())
+	{
+		return !FALSE;
+	}
+
+	return FALSE;
+}
+
+BOOL isTimeHM(const uint32 time)
+{
+	const uint32 currentTime = getTime();
+	if (getHoursFrom(currentTime) == getHoursFrom(time)
+		&& getMinutesFrom(currentTime) == getMinutesFrom(time))
+	{
+		return !FALSE;
+	}
+
+	return FALSE;
+}
+
 
 uint08 increase24(const uint08 val)
 {
