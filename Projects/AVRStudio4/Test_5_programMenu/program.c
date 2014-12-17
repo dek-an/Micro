@@ -129,8 +129,11 @@ void initProgram(void)
 	initMenu();
 	startMenu(m_pmPtr, MENU_ITEM_CPTR(miFunctions));
 
+	// eeprom constants
+	initEeprom();
+
 	// set tasks
-	setTimerTaskMS(&displayProgram, 0, 1100/*DISPLAY_PROGRAM_TASK_TIME*/);
+	setTimerTaskMS(&displayProgram, 0, 0/*DISPLAY_PROGRAM_TASK_TIME*/);
 	//setTimerTaskMS(&checkLight, 0, 1200/*CHECK_LIGHT_TASK_TIME*/);
 	//setTimerTaskMS(&checkFan, 0, 1300/*CHECK_FAN_TASK_TIME*/);
 
@@ -151,8 +154,6 @@ int programRun(void)
 // Helpers Implementation
 //
 static uint08 m_currentTemp = 0;
-static uint32 m_lightOnTime = 0;//getLightOnTime();
-static uint32 m_lightOffTime = 0;//getLightOffTime();
 
 static uint08 m_progFlag = 0;
 // flags
@@ -190,16 +191,16 @@ static void checkLight(const TaskParameter param)
 
 	const uint32 currentTime = getRawTime();
 
-	if (m_lightOnTime < m_lightOffTime)
+	if (getLightOnTime() < getLightOffTime())
 	{
 		// off
-		if (LIGHT_IS_ON() && currentTime >= m_lightOffTime)
+		if (LIGHT_IS_ON() && currentTime >= getLightOffTime())
 		{
 			CBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_OFF();
 		}
 		// on
-		else if (!LIGHT_IS_ON() && m_lightOnTime <= currentTime && currentTime < m_lightOffTime)
+		else if (!LIGHT_IS_ON() && getLightOnTime() <= currentTime && currentTime < getLightOffTime())
 		{
 			SBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_ON();
@@ -208,13 +209,13 @@ static void checkLight(const TaskParameter param)
 	else
 	{
 		// off
-		if (LIGHT_IS_ON() && m_lightOffTime <= currentTime && currentTime < m_lightOnTime)
+		if (LIGHT_IS_ON() && getLightOffTime() <= currentTime && currentTime < getLightOnTime())
 		{
 			CBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_OFF();
 		}
 		// on
-		else if (!LIGHT_IS_ON() && (m_lightOnTime <= currentTime || currentTime < m_lightOffTime))
+		else if (!LIGHT_IS_ON() && (getLightOnTime() <= currentTime || currentTime < getLightOffTime()))
 		{
 			SBI(LIGHT_PORT, LIGHT_PIN);
 			LIGHT_IS_ON_ON();
@@ -494,13 +495,11 @@ static void miSetFanOffTempTask(const TaskParameter param)
 static void miSetLightOnTimeTask(const TaskParameter param)
 {
 	changeTimeValue(param, &getLightOnTime, &setLightOnTime);
-	m_lightOnTime = getLightOnTime();
 }
 
 static void miSetLightOffTimeTask(const TaskParameter param)
 {
 	changeTimeValue(param, &getLightOffTime, &setLightOffTime);
-	m_lightOffTime = getLightOffTime();
 }
 
 static void miFunctLightOnOff(const TaskParameter param)

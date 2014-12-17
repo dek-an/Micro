@@ -67,6 +67,17 @@ typedef /*unsigned long long*/uint64_t uint64;
 	static inline void bit_name##_ON() { SBI(flag, bit_num); } \
 	static inline void bit_name##_OFF() { CBI(flag, bit_num); }
 
+#define DECLARE_EEPROM_VAR(varType, varName) \
+	extern varType get##varName(void); \
+	extern void set##varName(const varType);
+
+#define DECLARE_EEPROM_VAR_METHODS(varType, eepromType, varName, defaultVal) \
+	static varType m_##varName EEMEM = defaultVal; \
+	static varType m_local##varName = defaultVal; \
+	void init##varName(void) { m_local##varName = eeprom_read_##eepromType(&m_##varName); } \
+	varType get##varName(void) { return m_local##constName; } \
+	void set##varName(const varType val) { eeprom_update_##eepromType(&m_##varName, val); m_local##varName = val; }
+
 // ////////////////////////////////////////
 // Constants
 //

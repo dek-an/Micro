@@ -25,8 +25,6 @@
 #include "OWIPolled.h"
 #include "common_files\OWIcrc.h"
 
-#include <string.h> // Used for memcpy.
-
 /*! \brief  Sends one byte of data on the 1-Wire(R) bus(es).
  *  
  *  This function automates the task of sending a complete byte
@@ -288,7 +286,7 @@ unsigned char OWI_SearchDevices(OWI_device * devices, unsigned char numDevices, 
     unsigned char * currentID;
     unsigned char lastDeviation;
     unsigned char numFoundDevices;
-    unsigned char flag = SEARCH_SUCCESSFUL;
+	unsigned char flag = SEARCH_SUCCESSFUL;
     
     //сбрасываем адреса 1Wire устройств    
     for (i = 0; i < numDevices; i++)

@@ -42,7 +42,7 @@
  *  is used. The CPU frequency must be at least 2.170 MHz to be able to
  *  generate the shortest delays.
  */
-#define     CPU_FREQUENCY   F_CPU//16.000
+#define     CPU_FREQUENCY   16.000
 
 
 /*! \brief  Use internal pull-up resistor on 1-Wire buses.

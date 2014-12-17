@@ -28,10 +28,13 @@
 #ifndef _OWI_ROM_FUNCTIONS_H_
 #define _OWI_ROM_FUNCTIONS_H_
 
+#include <string.h> // Used for memcpy.
+
 typedef struct
 {
     unsigned char id[8];    //!< The 64 bit identifier.
 } OWI_device;
+
 
 #define SEARCH_SUCCESSFUL     0x00
 #define SEARCH_CRC_ERROR      0x01

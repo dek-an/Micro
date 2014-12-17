@@ -3,14 +3,12 @@
 
 #include <common/commonHeader.h>
 
-extern uint08 getFanOnTemperature(void);
-extern void setFanOnTemperature(const uint08 temp);
-extern uint08 getFanOffTemperature(void);
-extern void setFanOffTemperature(const uint08 temp);
+extern void initEeprom(void);
 
-extern uint32 getLightOnTime(void);
-extern void setLightOnTime(const uint32 time);
-extern uint32 getLightOffTime(void);
-extern void setLightOffTime(const uint32 time);
+DECLARE_EEPROM_VAR(uint08, FanOnTemperature)
+DECLARE_EEPROM_VAR(uint08, FanOffTemperature)
+
+DECLARE_EEPROM_VAR(uint32, LightOnTime)
+DECLARE_EEPROM_VAR(uint32, LightOffTime)
 
 #endif // _EEPROMCONSTANTS_H_
