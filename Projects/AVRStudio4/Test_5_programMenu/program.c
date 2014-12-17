@@ -19,8 +19,8 @@ void idleTask(const TaskParameter param) {}
 #define KBD_KEY_CANCEL	KBD_KEY_2
 
 #define DISPLAY_PROGRAM_TASK_TIME 1000
-#define CHECK_LIGHT_TASK_TIME 500
-#define CHECK_FAN_TASK_TIME 500
+#define CHECK_LIGHT_TASK_TIME 2000
+#define CHECK_FAN_TASK_TIME 2000
 
 #define FAN_PORT PORTC
 #define FAN_DDR DDRC
@@ -51,9 +51,7 @@ static const char offStr[] PROGMEM = "OFF";
 // //////////////////////////////////////////////////////////
 // Tasks
 //
-static void miSetHoursTask(const TaskParameter param);
-static void miSetMinutesTask(const TaskParameter param);
-static void miSetSecondsTask(const TaskParameter param);
+static void miSetTimeTask(const TaskParameter param);
 static void miSetFanOnTempTask(const TaskParameter param);
 static void miSetFanOffTempTask(const TaskParameter param);
 static void miSetLightOnTimeTask(const TaskParameter param);
@@ -81,22 +79,20 @@ static void checkFan(const TaskParameter param);
 MENU_MAKE_ITEM(	miFunctions,	miSettings,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miLightFunctions,	&idleTask,				"Functions");
 MENU_MAKE_ITEM(	miSettings,		EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	miTimeSettings,		&idleTask,				"Settings");
 // 2 Functions
-MENU_MAKE_ITEM(	miLightFunctions,miFanFunctions,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
-MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	miLightFunctions,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctLightOnOff,		"Light ON/OFF");
+MENU_MAKE_ITEM(	miLightFunctions,miFanFunctions,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctLightOnOff,		"Light ON/OFF");
+MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	miLightFunctions,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
 // 2 Settings
-MENU_MAKE_ITEM(	miTimeSettings,	miFanSettings,		EMPTY_MENU_ITEM,	miSettings,			miSetHours,			&idleTask,				"Time Settings");
-MENU_MAKE_ITEM(	miFanSettings,	miLightSettings,	miTimeSettings,		miSettings,			miSetFanOnTemp,		&idleTask,				"Fan Settings");
-MENU_MAKE_ITEM(	miLightSettings,EMPTY_MENU_ITEM,	miFanSettings,		miSettings,			miSetLightOnTime,	&idleTask,				"Light Settings");
+MENU_MAKE_ITEM(	miTimeSettings,	miLightSettings,	EMPTY_MENU_ITEM,	miSettings,			miSetTime,			&idleTask,				"Time Settings");
+MENU_MAKE_ITEM(	miLightSettings,miFanSettings,		miTimeSettings,		miSettings,			miSetLightOnTime,	&idleTask,				"Light Settings");
+MENU_MAKE_ITEM(	miFanSettings,	EMPTY_MENU_ITEM,	miLightSettings,	miSettings,			miSetFanOnTemp,		&idleTask,				"Fan Settings");
 // 3 Time Settings
-MENU_MAKE_ITEM(	miSetHours,		miSetMinutes,		EMPTY_MENU_ITEM,	miTimeSettings,		EMPTY_MENU_ITEM,	&miSetHoursTask,		"Set Hours");
-MENU_MAKE_ITEM(	miSetMinutes,	miSetSeconds,		miSetHours,			miTimeSettings,		EMPTY_MENU_ITEM,	&miSetMinutesTask,		"Set Minutes");
-MENU_MAKE_ITEM(	miSetSeconds,	EMPTY_MENU_ITEM,	miSetMinutes,		miTimeSettings,		EMPTY_MENU_ITEM,	&miSetSecondsTask,		"Set Seconds");
-// 3 Fan Settings
-MENU_MAKE_ITEM(	miSetFanOnTemp,	miSetFanOffTemp,	EMPTY_MENU_ITEM,	miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOnTempTask,	"Set ON Temp");
-MENU_MAKE_ITEM(	miSetFanOffTemp,EMPTY_MENU_ITEM,	miSetFanOnTemp,		miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOffTempTask,	"Set OFF Temp");
+MENU_MAKE_ITEM(	miSetTime,		EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miTimeSettings,		EMPTY_MENU_ITEM,	&miSetTimeTask,			"Set Time");
 // 3 Light Settings
 MENU_MAKE_ITEM(	miSetLightOnTime,miSetLightOffTime,	EMPTY_MENU_ITEM,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOnTimeTask,	"Set ON Time");
 MENU_MAKE_ITEM(	miSetLightOffTime,EMPTY_MENU_ITEM,	miSetLightOffTime,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOffTimeTask,	"Set OFF Time");
+// 3 Fan Settings
+MENU_MAKE_ITEM(	miSetFanOnTemp,	miSetFanOffTemp,	EMPTY_MENU_ITEM,	miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOnTempTask,	"Set ON Temp");
+MENU_MAKE_ITEM(	miSetFanOffTemp,EMPTY_MENU_ITEM,	miSetFanOnTemp,		miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOffTempTask,	"Set OFF Temp");
 
 static MenuObject m_programMenu;
 static MenuObject* m_pmPtr = &m_programMenu;
@@ -134,8 +130,8 @@ void initProgram(void)
 
 	// set tasks
 	setTimerTaskMS(&displayProgram, 0, 0/*DISPLAY_PROGRAM_TASK_TIME*/);
-	//setTimerTaskMS(&checkLight, 0, 1200/*CHECK_LIGHT_TASK_TIME*/);
-	//setTimerTaskMS(&checkFan, 0, 1300/*CHECK_FAN_TASK_TIME*/);
+	setTimerTaskMS(&checkLight, 0, 1200/*CHECK_LIGHT_TASK_TIME*/);
+	setTimerTaskMS(&checkFan, 0, 1300/*CHECK_FAN_TASK_TIME*/);
 
 	SEI();
 }
@@ -180,7 +176,7 @@ static void displayProgram(const TaskParameter param)
 	lcdWriteStr(strBuff);
 
 	lcdGoTo(1, 0);
-	sprintf(strBuff, "%lu %lu", getLightOnTime(), getLightOffTime());
+	sprintf(strBuff, "%lu %lu %lu", getRawTime(), getLightOnTime(), getLightOffTime());
 	lcdWriteStr(strBuff);
 	//lcdWriteStrProgMem(menuStr);
 }
@@ -196,13 +192,13 @@ static void checkLight(const TaskParameter param)
 		// off
 		if (LIGHT_IS_ON() && currentTime >= getLightOffTime())
 		{
-			CBI(LIGHT_PORT, LIGHT_PIN);
+			CBI(LIGHT_PORT, LIGHT_BIT);
 			LIGHT_IS_ON_OFF();
 		}
 		// on
 		else if (!LIGHT_IS_ON() && getLightOnTime() <= currentTime && currentTime < getLightOffTime())
 		{
-			SBI(LIGHT_PORT, LIGHT_PIN);
+			SBI(LIGHT_PORT, LIGHT_BIT);
 			LIGHT_IS_ON_ON();
 		}
 	}
@@ -211,13 +207,13 @@ static void checkLight(const TaskParameter param)
 		// off
 		if (LIGHT_IS_ON() && getLightOffTime() <= currentTime && currentTime < getLightOnTime())
 		{
-			CBI(LIGHT_PORT, LIGHT_PIN);
+			CBI(LIGHT_PORT, LIGHT_BIT);
 			LIGHT_IS_ON_OFF();
 		}
 		// on
 		else if (!LIGHT_IS_ON() && (getLightOnTime() <= currentTime || currentTime < getLightOffTime()))
 		{
-			SBI(LIGHT_PORT, LIGHT_PIN);
+			SBI(LIGHT_PORT, LIGHT_BIT);
 			LIGHT_IS_ON_ON();
 		}
 	}
@@ -230,13 +226,13 @@ static void checkFan(const TaskParameter param)
 	// off
 	if (m_currentTemp <= getFanOffTemperature() && FAN_IS_ON())
 	{
-		CBI(FAN_PORT, FAN_PIN);
+		CBI(FAN_PORT, FAN_BIT);
 		FAN_IS_ON_OFF();
 	}
 	// on
 	else if (m_currentTemp >= getFanOnTemperature() && !FAN_IS_ON())
 	{
-		SBI(FAN_PORT, FAN_PIN);
+		SBI(FAN_PORT, FAN_BIT);
 		FAN_IS_ON_ON();
 	}
 }
@@ -333,7 +329,7 @@ static void changeTimeValue(const TaskParameter param, TimeGetter tmGetter, Time
 			{
 				currentVal = increase24(currentVal);
 			}
-			else // if minutes
+			else // if minutes or seconds
 			{
 				currentVal = increase60(currentVal);
 			}
@@ -343,7 +339,7 @@ static void changeTimeValue(const TaskParameter param, TimeGetter tmGetter, Time
 			{
 				currentVal = decrease24(currentVal);
 			}
-			else // if minutes
+			else // if minutes or seconds
 			{
 				currentVal = decrease60(currentVal);
 			}
@@ -352,11 +348,18 @@ static void changeTimeValue(const TaskParameter param, TimeGetter tmGetter, Time
 			if (hoursStr == currentStr) // if hours
 			{
 				changedTime = updateHours(changedTime, currentVal);
+				currentVal = getMinutesFrom(changedTime);
 				currentStr = minutesStr;
 			}
-			else // if minutes
+			else if (minutesStr == currentStr)// if minutes
 			{
 				changedTime = updateMinutes(changedTime, currentVal);
+				currentVal = getSecondsFrom(changedTime);
+				currentStr = secondsStr;
+			}
+			else // if seconds
+			{
+				changedTime = updateSeconds(changedTime, currentVal);
 				tmSetter(changedTime);
 
 				keyCancelPressed(KBD_KEY_CANCEL);
@@ -437,37 +440,9 @@ static void changeOnOffValue(const TaskParameter param, volatile uint08* port, c
 }
 
 // Tasks
-static void miSetHoursTask(const TaskParameter param)
+static void miSetTimeTask(const TaskParameter param)
 {
-	changeUint08Value(
-		param,
-		&getHours,
-		&setHours,
-		&increase24,
-		&decrease24,
-		hoursStr);
-}
-
-static void miSetMinutesTask(const TaskParameter param)
-{
-	changeUint08Value(
-		param,
-		&getMinutes,
-		&setMinutes,
-		&increase60,
-		&decrease60,
-		minutesStr);
-}
-
-static void miSetSecondsTask(const TaskParameter param)
-{
-	changeUint08Value(
-		param,
-		&getSeconds,
-		&setSeconds,
-		&increase60,
-		&decrease60,
-		secondsStr);
+	changeTimeValue(param, &getRawTime, &setRawTime);
 }
 
 static void miSetFanOnTempTask(const TaskParameter param)

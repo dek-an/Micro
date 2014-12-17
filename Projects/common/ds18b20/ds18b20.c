@@ -2,6 +2,7 @@
 
 #include <thirdParty/oneWire/OWIPolled.h>
 #include <thirdParty/oneWire/OWIHighLevelFunctions.h>
+#include <thirdParty/oneWire/OWIBitFunctions.h>
 
 //код семейства и коды команд датчика DS18B20
 #define DS18B20_FAMILY_ID                0x28 
@@ -13,9 +14,9 @@
 #define DS18B20_READ_POWER_SUPPLY        0xb4
 
 //вывод, к которому подключены 1Wire устройства
-#define BUS OWI_PIN_##DS18B20_BUS
+#define BUS DS18B20_BUS
 
-static OWI_device m_allDevices[MAX_DEVICES];
+static OWI_device m_allDevices[DS18B20_MAX_DEVICES];
 static uchar rom[8];
 
 static uchar m_flag = 0;
@@ -33,7 +34,7 @@ void initDs18b20(void)
 uchar ds18b20ReadTemperature(uchar * id, uint32* temperature)
 {
 	static uchar devicesNum = 0;
-	static uchar crscFlag = 0;
+	static uchar crcFlag = 0;
 
 	// -флаг сброшен - выполнить поиск 1Wire устройств
 	// -если количество заданных устройсв совпадает с
@@ -42,8 +43,8 @@ uchar ds18b20ReadTemperature(uchar * id, uint32* temperature)
 	if (!ALL_DEVICES_FOUND())
 	{
 		devicesNum = 0;
-		crcFlag = OWI_SearchDevices(m_allDevices, MAX_DEVICES, BUS, &devicesNum);
-		if (devicesNum == MAX_DEVICES && crcFlag != SEARCH_CRC_ERROR)
+		crcFlag = OWI_SearchDevices(m_allDevices, DS18B20_MAX_DEVICES, BUS, &devicesNum);
+		if (devicesNum == DS18B20_MAX_DEVICES && crcFlag != SEARCH_CRC_ERROR)
 		{
 			ALL_DEVICES_FOUND_ON();
 		}

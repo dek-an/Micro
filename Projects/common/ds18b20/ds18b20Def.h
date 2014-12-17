@@ -1,7 +1,7 @@
 #ifndef _DS18b20DEF_H_
 #define _DS18b20DEF_H_
 
-#define DS18B20_BUS 7
+#define DS18B20_BUS OWI_PIN_7
 //количество устройств на шине 1Wire
 #define DS18B20_MAX_DEVICES 2
 

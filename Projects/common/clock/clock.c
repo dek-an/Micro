@@ -125,6 +125,11 @@ uint32 getRawTime(void)
 	return getTime();
 }
 
+void setRawTime(const uint32 time)
+{
+	setTime(time);
+}
+
 BOOL isTimeHMS(const uint32 time)
 {
 	if (time == getTime())

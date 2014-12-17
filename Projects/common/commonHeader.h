@@ -75,7 +75,7 @@ typedef /*unsigned long long*/uint64_t uint64;
 	static varType m_##varName EEMEM = defaultVal; \
 	static varType m_local##varName = defaultVal; \
 	void init##varName(void) { m_local##varName = eeprom_read_##eepromType(&m_##varName); } \
-	varType get##varName(void) { return m_local##constName; } \
+	varType get##varName(void) { return m_local##varName; } \
 	void set##varName(const varType val) { eeprom_update_##eepromType(&m_##varName, val); m_local##varName = val; }
 
 // ////////////////////////////////////////

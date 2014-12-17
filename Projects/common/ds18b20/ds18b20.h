@@ -3,6 +3,8 @@
 
 #include <common/commonHeader.h>
 
+#include "ds18b20Def.h"
+
 extern void initDs18b20(void);
 extern uchar ds18b20ReadTemperature(uchar * id, uint32* temperature);
 

@@ -25,6 +25,7 @@ extern uint08 getMinutes(void);
 extern uint08 getSeconds(void);
 
 extern uint32 getRawTime(void);
+extern void setRawTime(const uint32 time);
 
 extern BOOL isTimeHMS(const uint32 time);
 extern BOOL isTimeHM(const uint32 time);
