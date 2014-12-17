@@ -179,7 +179,7 @@ static void displayProgram(const TaskParameter param)
 	lcdWriteStr(strBuff);
 
 	lcdGoTo(1, 0);
-	sprintf(strBuff, "%i %i", getLightOnTime(), getLightOffTime());
+	sprintf(strBuff, "%lu %lu", getLightOnTime(), getLightOffTime());
 	lcdWriteStr(strBuff);
 	//lcdWriteStrProgMem(menuStr);
 }
@@ -350,12 +350,12 @@ static void changeTimeValue(const TaskParameter param, TimeGetter tmGetter, Time
 		case KBD_KEY_OK:
 			if (hoursStr == currentStr) // if hours
 			{
-				updateHours(changedTime, currentVal);
+				changedTime = updateHours(changedTime, currentVal);
 				currentStr = minutesStr;
 			}
 			else // if minutes
 			{
-				updateMinutes(changedTime, currentVal);
+				changedTime = updateMinutes(changedTime, currentVal);
 				tmSetter(changedTime);
 
 				keyCancelPressed(KBD_KEY_CANCEL);
