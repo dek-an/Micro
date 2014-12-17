@@ -182,17 +182,17 @@ uint08 decrease60(const uint08 val)
 
 uint08 getHoursFrom(const uint32 time)
 {
-	return (uint08)(time / 3600);
+	return ((uint08)(time / 3600)) % 24;
 }
 
 uint08 getMinutesFrom(const uint32 time)
 {
-	return (uint08)((time % 3600) / 60);
+	return ((uint08)((time % 3600) / 60)) % 60;
 }
 
 uint08 getSecondsFrom(const uint32 time)
 {
-	return (uint08)((time % 3600) % 60);
+	return ((uint08)((time % 3600) % 60)) % 60;
 }
 
 uint32 getTimeFrom(const uint08 hours, const uint08 minutes, const uint08 seconds)

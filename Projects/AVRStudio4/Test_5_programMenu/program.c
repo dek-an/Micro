@@ -130,9 +130,9 @@ void initProgram(void)
 	startMenu(m_pmPtr, MENU_ITEM_CPTR(miFunctions));
 
 	// set tasks
-	setTimerTaskMS(&displayProgram, 0, 100/*DISPLAY_PROGRAM_TASK_TIME*/);
-	setTimerTaskMS(&checkLight, 0, 200/*CHECK_LIGHT_TASK_TIME*/);
-	setTimerTaskMS(&checkFan, 0, 300/*CHECK_FAN_TASK_TIME*/);
+	setTimerTaskMS(&displayProgram, 0, 1100/*DISPLAY_PROGRAM_TASK_TIME*/);
+	//setTimerTaskMS(&checkLight, 0, 1200/*CHECK_LIGHT_TASK_TIME*/);
+	//setTimerTaskMS(&checkFan, 0, 1300/*CHECK_FAN_TASK_TIME*/);
 
 	SEI();
 }
@@ -174,12 +174,14 @@ static void displayProgram(const TaskParameter param)
 
 	lcdClear();
 
-	static char strBuff[16];
+	static char strBuff[32];
 	sprintf(strBuff, "%s %d %d %d", getTimeStr(), m_currentTemp, getFanOnTemperature(), getFanOffTemperature());
 	lcdWriteStr(strBuff);
 
 	lcdGoTo(1, 0);
-	lcdWriteStrProgMem(menuStr);
+	sprintf(strBuff, "%i %i", getLightOnTime(), getLightOffTime());
+	lcdWriteStr(strBuff);
+	//lcdWriteStrProgMem(menuStr);
 }
 
 static void checkLight(const TaskParameter param)
