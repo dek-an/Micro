@@ -6,6 +6,6 @@
 #include "ds18b20Def.h"
 
 extern void initDs18b20(void);
-extern uchar ds18b20ReadTemperature(uchar * id, uint32* temperature);
+extern uchar ds18b20ReadTemperature(const uchar id, float* temperature);
 
 #endif // _D18b20_H_

@@ -31,6 +31,7 @@
 //
 typedef unsigned char BOOL;
 typedef unsigned char uchar;
+typedef unsigned int uint;
 typedef /*unsigned char*/uint8_t uint08;
 typedef /*unsigned short*/uint16_t uint16;
 typedef /*unsigned long*/uint32_t uint32;
@@ -62,7 +63,7 @@ typedef /*unsigned long long*/uint64_t uint64;
 	isInitialized = !FALSE
 
 #define DECLARE_FLAG_BIT(flag, bit_name, bit_num) \
-	static const uchar bit_name##_BIT = bit_num; \
+	static const uint08 bit_name##_BIT = bit_num; \
 	static inline BOOL bit_name() { return GBI(flag, bit_num); } \
 	static inline void bit_name##_ON() { SBI(flag, bit_num); } \
 	static inline void bit_name##_OFF() { CBI(flag, bit_num); }

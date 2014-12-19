@@ -3,6 +3,7 @@
 #include <common/menu/menu.h>
 #include <common/keyboard/keyboard.h>
 #include <common/clock/clock.h>
+#include <common/ds18b20/ds18b20.h>
 
 #include <stdio.h>
 
@@ -21,6 +22,7 @@ void idleTask(const TaskParameter param) {}
 #define DISPLAY_PROGRAM_TASK_TIME 1000
 #define CHECK_LIGHT_TASK_TIME 2000
 #define CHECK_FAN_TASK_TIME 2000
+#define UPDATE_TEMPERATURE_TASK_TIME 2000
 
 #define FAN_PORT PORTC
 #define FAN_DDR DDRC
@@ -43,8 +45,10 @@ static const char fanOnStr[] PROGMEM = "Fan ON Temp:";
 static const char fanOffStr[] PROGMEM = "Fan OFF Temp:";
 static const char lightOnStr[] PROGMEM = "Light ON Time:";
 static const char lightOffStr[] PROGMEM = "Light OFF Time:";
-static const char lightStr[] PROGMEM = "Light is:";
-static const char fanStr[] PROGMEM = "Fan is:";
+static const char lightStr[] PROGMEM = "Turn Light:";
+static const char fanStr[] PROGMEM = "Turn Fan:";
+static const char lightProcessingStr[] PROGMEM = "Light Proc is:";
+static const char fanProcessingStr[] PROGMEM = "Fan Proc is:";
 static const char onStr[] PROGMEM = "ON";
 static const char offStr[] PROGMEM = "OFF";
 
@@ -52,10 +56,12 @@ static const char offStr[] PROGMEM = "OFF";
 // Tasks
 //
 static void miSetTimeTask(const TaskParameter param);
-static void miSetFanOnTempTask(const TaskParameter param);
-static void miSetFanOffTempTask(const TaskParameter param);
+static void miActivateLightTask(const TaskParameter param);
 static void miSetLightOnTimeTask(const TaskParameter param);
 static void miSetLightOffTimeTask(const TaskParameter param);
+static void miActivateFanTask(const TaskParameter param);
+static void miSetFanOnTempTask(const TaskParameter param);
+static void miSetFanOffTempTask(const TaskParameter param);
 static void miFunctLightOnOff(const TaskParameter param);
 static void miFunctFanOnOff(const TaskParameter param);
 
@@ -70,32 +76,58 @@ static void keyCancelPressed(const TaskParameter param);
 static void displayProgram(const TaskParameter param);
 static void checkLight(const TaskParameter param);
 static void checkFan(const TaskParameter param);
+static void updateTemperature(const TaskParameter param);
 
 // //////////////////////////////////////////////////////////
 // MENU definition
 //
-//				NAME			NEXT				PREVIOUS			PARENT				CHILD				TASK					TEXT
+//				NAME				NEXT				PREVIOUS			PARENT				CHILD				TASK					TEXT
 // 1
-MENU_MAKE_ITEM(	miFunctions,	miSettings,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miLightFunctions,	&idleTask,				"Functions");
-MENU_MAKE_ITEM(	miSettings,		EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	miTimeSettings,		&idleTask,				"Settings");
+MENU_MAKE_ITEM(	miFunctions,		miSettings,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miLightFunctions,	&idleTask,				"Functions");
+MENU_MAKE_ITEM(	miSettings,			EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	miTimeSettings,		&idleTask,				"Settings");
 // 2 Functions
-MENU_MAKE_ITEM(	miLightFunctions,miFanFunctions,	EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctLightOnOff,		"Light ON/OFF");
-MENU_MAKE_ITEM(	miFanFunctions,	EMPTY_MENU_ITEM,	miLightFunctions,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
+MENU_MAKE_ITEM(	miLightFunctions,	miFanFunctions,		EMPTY_MENU_ITEM,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctLightOnOff,		"Light ON/OFF");
+MENU_MAKE_ITEM(	miFanFunctions,		EMPTY_MENU_ITEM,	miLightFunctions,	miFunctions,		EMPTY_MENU_ITEM,	&miFunctFanOnOff,		"Fan ON/OFF");
 // 2 Settings
-MENU_MAKE_ITEM(	miTimeSettings,	miLightSettings,	EMPTY_MENU_ITEM,	miSettings,			miSetTime,			&idleTask,				"Time Settings");
-MENU_MAKE_ITEM(	miLightSettings,miFanSettings,		miTimeSettings,		miSettings,			miSetLightOnTime,	&idleTask,				"Light Settings");
-MENU_MAKE_ITEM(	miFanSettings,	EMPTY_MENU_ITEM,	miLightSettings,	miSettings,			miSetFanOnTemp,		&idleTask,				"Fan Settings");
+MENU_MAKE_ITEM(	miTimeSettings,		miLightSettings,	EMPTY_MENU_ITEM,	miSettings,			miSetTime,			&idleTask,				"Time Settings");
+MENU_MAKE_ITEM(	miLightSettings,	miFanSettings,		miTimeSettings,		miSettings,			miActivateLight,	&idleTask,				"Light Settings");
+MENU_MAKE_ITEM(	miFanSettings,		EMPTY_MENU_ITEM,	miLightSettings,	miSettings,			miActivateFan,		&idleTask,				"Fan Settings");
 // 3 Time Settings
-MENU_MAKE_ITEM(	miSetTime,		EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miTimeSettings,		EMPTY_MENU_ITEM,	&miSetTimeTask,			"Set Time");
+MENU_MAKE_ITEM(	miSetTime,			EMPTY_MENU_ITEM,	EMPTY_MENU_ITEM,	miTimeSettings,		EMPTY_MENU_ITEM,	&miSetTimeTask,			"Set Time");
 // 3 Light Settings
-MENU_MAKE_ITEM(	miSetLightOnTime,miSetLightOffTime,	EMPTY_MENU_ITEM,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOnTimeTask,	"Set ON Time");
-MENU_MAKE_ITEM(	miSetLightOffTime,EMPTY_MENU_ITEM,	miSetLightOffTime,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOffTimeTask,	"Set OFF Time");
+MENU_MAKE_ITEM(	miActivateLight,	miSetLightOnTime,	EMPTY_MENU_ITEM,	miLightSettings,	EMPTY_MENU_ITEM,	&miActivateLightTask,	"Activate Light"); // Turn ON/OFF Light Processing
+MENU_MAKE_ITEM(	miSetLightOnTime,	miSetLightOffTime,	miActivateLight,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOnTimeTask,	"Set ON Time");
+MENU_MAKE_ITEM(	miSetLightOffTime,	EMPTY_MENU_ITEM,	miSetLightOnTime,	miLightSettings,	EMPTY_MENU_ITEM,	&miSetLightOffTimeTask,	"Set OFF Time");
 // 3 Fan Settings
-MENU_MAKE_ITEM(	miSetFanOnTemp,	miSetFanOffTemp,	EMPTY_MENU_ITEM,	miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOnTempTask,	"Set ON Temp");
-MENU_MAKE_ITEM(	miSetFanOffTemp,EMPTY_MENU_ITEM,	miSetFanOnTemp,		miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOffTempTask,	"Set OFF Temp");
+MENU_MAKE_ITEM(	miActivateFan,		miSetFanOnTemp,		EMPTY_MENU_ITEM,	miFanSettings,		EMPTY_MENU_ITEM,	&miActivateFanTask,		"Activate Fan"); // Turn ON/OFF FAN Processing
+MENU_MAKE_ITEM(	miSetFanOnTemp,		miSetFanOffTemp,	miActivateFan,		miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOnTempTask,	"Set ON Temp");
+MENU_MAKE_ITEM(	miSetFanOffTemp,	EMPTY_MENU_ITEM,	miSetFanOnTemp,		miFanSettings,		EMPTY_MENU_ITEM,	&miSetFanOffTempTask,	"Set OFF Temp");
 
+// //////////////////////////////////////////////////////////
+// Members
+//
 static MenuObject m_programMenu;
 static MenuObject* m_pmPtr = &m_programMenu;
+
+static float m_waterTemp = 0;
+static float m_outTemp = 0;
+
+static volatile uint08 m_progFlag = 0;
+// flags
+// IN MENU
+DECLARE_FLAG_BIT(m_progFlag, IN_MENU, 0)
+// In Menu Task handler
+DECLARE_FLAG_BIT(m_progFlag, IN_MENU_TASK, 1)
+// Light is on
+DECLARE_FLAG_BIT(m_progFlag, LIGHT_IS_ON, 2)
+// Fan is on
+DECLARE_FLAG_BIT(m_progFlag, FAN_IS_ON, 3)
+// Temperature correctness
+DECLARE_FLAG_BIT(m_progFlag, TEMP_WATER_IS_OK, 4)
+DECLARE_FLAG_BIT(m_progFlag, TEMP_OUT_IS_OK, 5)
+// Light and Fan Processing
+DECLARE_FLAG_BIT(m_progFlag, LIGHT_PROC_ACTIVATED, 6)
+DECLARE_FLAG_BIT(m_progFlag, FAN_PROC_ACTIVATED, 7)
 
 // //////////////////////////////////////////////////////////
 // Interface Implementation
@@ -128,10 +160,17 @@ void initProgram(void)
 	// eeprom constants
 	initEeprom();
 
+	// temperature sensors
+	initDs18b20();
+
+	LIGHT_PROC_ACTIVATED_ON();
+	FAN_PROC_ACTIVATED_ON();
+
 	// set tasks
 	setTimerTaskMS(&displayProgram, 0, 0/*DISPLAY_PROGRAM_TASK_TIME*/);
 	setTimerTaskMS(&checkLight, 0, 1200/*CHECK_LIGHT_TASK_TIME*/);
 	setTimerTaskMS(&checkFan, 0, 1300/*CHECK_FAN_TASK_TIME*/);
+	setTimerTaskMS(&updateTemperature, 0, 1400);
 
 	SEI();
 }
@@ -149,19 +188,6 @@ int programRun(void)
 // //////////////////////////////////////////////////////////
 // Helpers Implementation
 //
-static uint08 m_currentTemp = 0;
-
-static uint08 m_progFlag = 0;
-// flags
-// IN MENU
-DECLARE_FLAG_BIT(m_progFlag, IN_MENU, 0)
-// In Menu Task handler
-DECLARE_FLAG_BIT(m_progFlag, IN_MENU_TASK, 1)
-// Light is on
-DECLARE_FLAG_BIT(m_progFlag, LIGHT_IS_ON, 2)
-// Fan is on
-DECLARE_FLAG_BIT(m_progFlag, FAN_IS_ON, 3)
-
 static void displayProgram(const TaskParameter param)
 {
 	setTimerTaskMS(&displayProgram, 0, DISPLAY_PROGRAM_TASK_TIME);
@@ -172,18 +198,27 @@ static void displayProgram(const TaskParameter param)
 	lcdClear();
 
 	static char strBuff[32];
-	sprintf(strBuff, "%s %d %d %d", getTimeStr(), m_currentTemp, getFanOnTemperature(), getFanOffTemperature());
+	// first line
+	sprintf(strBuff, "%s %c %c", getTimeStr(), LIGHT_IS_ON() ? 15u : 1u, FAN_IS_ON() ? '#' : 1u);
+	lcdWriteStr(strBuff);
+	// second line
+	int numChars = sprintf(strBuff, "W: %.1f%c O: %.1f%c", m_waterTemp, 176u, m_outTemp, 176u);
+	if (numChars > 16 || numChars < 0)
+	{
+		sprintf(strBuff, "W:%.1f O:%.1f", m_waterTemp, m_outTemp);
+	}
+	lcdGoTo(1, 0);
 	lcdWriteStr(strBuff);
 
-	lcdGoTo(1, 0);
-	sprintf(strBuff, "%lu %lu %lu", getRawTime(), getLightOnTime(), getLightOffTime());
-	lcdWriteStr(strBuff);
 	//lcdWriteStrProgMem(menuStr);
 }
 
 static void checkLight(const TaskParameter param)
 {
 	setTimerTaskMS(&checkLight, 0, CHECK_LIGHT_TASK_TIME);
+
+	if (!LIGHT_PROC_ACTIVATED())
+		return;
 
 	const uint32 currentTime = getRawTime();
 
@@ -223,17 +258,43 @@ static void checkFan(const TaskParameter param)
 {
 	setTimerTaskMS(&checkFan, 0, CHECK_FAN_TASK_TIME);
 
+	if (!FAN_PROC_ACTIVATED())
+		return;
+
 	// off
-	if (m_currentTemp <= getFanOffTemperature() && FAN_IS_ON())
+	if (m_waterTemp <= getFanOffTemperature() && FAN_IS_ON())
 	{
 		CBI(FAN_PORT, FAN_BIT);
 		FAN_IS_ON_OFF();
 	}
 	// on
-	else if (m_currentTemp >= getFanOnTemperature() && !FAN_IS_ON())
+	else if (m_waterTemp >= getFanOnTemperature() && !FAN_IS_ON())
 	{
 		SBI(FAN_PORT, FAN_BIT);
 		FAN_IS_ON_ON();
+	}
+}
+
+static void updateTemperature(const TaskParameter param)
+{
+	setTimerTaskMS(&updateTemperature, 0, UPDATE_TEMPERATURE_TASK_TIME);
+
+	if (ds18b20ReadTemperature(0, &m_waterTemp) == DS18B20_READ_SUCCESSFUL)
+	{
+		TEMP_WATER_IS_OK_ON();
+	}
+	else
+	{
+		TEMP_WATER_IS_OK_OFF();
+	}
+
+	if (ds18b20ReadTemperature(1, &m_outTemp) == DS18B20_READ_SUCCESSFUL)
+	{
+		TEMP_OUT_IS_OK_ON();
+	}
+	else
+	{
+		TEMP_OUT_IS_OK_OFF();
 	}
 }
 
@@ -445,6 +506,26 @@ static void miSetTimeTask(const TaskParameter param)
 	changeTimeValue(param, &getRawTime, &setRawTime);
 }
 
+static void miActivateLightTask(const TaskParameter param)
+{
+	changeOnOffValue(param, &m_progFlag, LIGHT_PROC_ACTIVATED_BIT, lightProcessingStr);
+}
+
+static void miSetLightOnTimeTask(const TaskParameter param)
+{
+	changeTimeValue(param, &getLightOnTime, &setLightOnTime);
+}
+
+static void miSetLightOffTimeTask(const TaskParameter param)
+{
+	changeTimeValue(param, &getLightOffTime, &setLightOffTime);
+}
+
+static void miActivateFanTask(const TaskParameter param)
+{
+	changeOnOffValue(param, &m_progFlag, FAN_PROC_ACTIVATED_BIT, fanProcessingStr);
+}
+
 static void miSetFanOnTempTask(const TaskParameter param)
 {
 	changeUint08Value(
@@ -465,16 +546,6 @@ static void miSetFanOffTempTask(const TaskParameter param)
 		&increment,
 		&decrement,
 		fanOffStr);
-}
-
-static void miSetLightOnTimeTask(const TaskParameter param)
-{
-	changeTimeValue(param, &getLightOnTime, &setLightOnTime);
-}
-
-static void miSetLightOffTimeTask(const TaskParameter param)
-{
-	changeTimeValue(param, &getLightOffTime, &setLightOffTime);
 }
 
 static void miFunctLightOnOff(const TaskParameter param)
