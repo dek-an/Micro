@@ -3,7 +3,6 @@
 #include <thirdParty/oneWire/OWIPolled.h>
 #include <thirdParty/oneWire/OWIHighLevelFunctions.h>
 #include <thirdParty/oneWire/OWIBitFunctions.h>
-#include <thirdParty/oneWire/common_files/OWIcrc.h>
 
 //код семейства и коды команд датчика DS18B20
 //#define DS18B20_FAMILY_ID                0x28 
@@ -131,5 +130,5 @@ float DS18B20_ConvertTemperature(uint temperature)
 		temperature = ~temperature + 1;
 	}
 
-	return (float)((temperature >> 1) + (temperature >> 3)) / 10 * sign;
+	return (float)(temperature >> 1 + temperature >> 3) / 10 * sign;
 }

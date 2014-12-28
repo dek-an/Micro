@@ -199,13 +199,17 @@ static void displayProgram(const TaskParameter param)
 
 	static char strBuff[32];
 	// first line
-	sprintf(strBuff, "%s %c %c", getTimeStr(), LIGHT_IS_ON() ? 15u : 1u, FAN_IS_ON() ? '#' : 1u);
+	sprintf(strBuff, "%s %c %c", getTimeStr(), LIGHT_IS_ON() ? 15u : '', FAN_IS_ON() ? '#' : '');
 	lcdWriteStr(strBuff);
 	// second line
-	int numChars = sprintf(strBuff, "W: %.1f%c O: %.1f%c", m_waterTemp, 176u, m_outTemp, 176u);
+	int numChars = sprintf(strBuff, "W: %c%.1f%c O: %c%.1f%c", 
+						m_waterTemp >= 0 ? '+' : '', m_waterTemp, 176u,
+						m_outTemp >= 0 ? '+' : '', m_outTemp, 176u);
 	if (numChars > 16 || numChars < 0)
 	{
-		sprintf(strBuff, "W:%.1f O:%.1f", m_waterTemp, m_outTemp);
+		sprintf(strBuff, "W:%c%.1f O:%c%.1f", 
+						m_waterTemp >= 0 ? '+' : '', m_waterTemp,
+						m_outTemp >= 0 ? '+' : '', m_outTemp);
 	}
 	lcdGoTo(1, 0);
 	lcdWriteStr(strBuff);
@@ -288,7 +292,7 @@ static void updateTemperature(const TaskParameter param)
 		TEMP_WATER_IS_OK_OFF();
 	}
 
-	if (ds18b20ReadTemperature(1, &m_outTemp) == DS18B20_READ_SUCCESSFUL)
+	if (ds18b20ReadTemperature(1, &m_outTemp)
 	{
 		TEMP_OUT_IS_OK_ON();
 	}
