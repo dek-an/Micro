@@ -1,12 +1,19 @@
 #include "commonHeader.h"
 
-#define TC_PRESCALER 64
-#define TC_PRESCALER_BITS 0x03 // 0:1:1
-#define TC_ONE_SEC 73 //F_CPU / TC_PRESCALER / 256
+#define TC_PRESCALER 1024
+#define TC_PRESCALER_BITS 0x05 // 1:0:1
+#define TC_ONE_SEC 37 //F_CPU / TC_PRESCALER / 256
 
 // //////////////////////////////////////////////////////////
 
-#define SS_IMPULSES_NUM 6 // Num of impulses per 1 meter
+#define SS_TICKS_NUM 6 // Num of impulses per 1 meter
+
+// //////////////////////////////////////////////////////////
+
+#define SPEED_10 3 // m/sec
+#define SPEED_20 6 // m/sec
+#define SPEED_30 8 // m/sec
+#define SPEED_40 11 // m/sec
 
 // //////////////////////////////////////////////////////////
 
@@ -26,8 +33,7 @@
 // //////////////////////////////////////////////////////////
 //
 //
-static volatile uint08 m_ssTicks = 0;
-static volatile uint08 m_distance = 0; // in m
+static volatile uint16 m_ssTicks = 0;
 static volatile uint08 m_speed = 0; // in m/sec
 
 // //////////////////////////////////////////////////////////
@@ -35,21 +41,14 @@ static volatile uint08 m_speed = 0; // in m/sec
 //
 ISR(PCINT0_vect)
 {
-	if (GBI(SPEED_SENSOR_PIN, SPEED_SENSOR_BIT))
-	{
-		m_ssTicks = (++m_ssTicks) % SS_IMPULSES_NUM;
-		if (!m_ssTicks)
-		{
-			++m_distance;
-		}
-	}
+	++m_ssTicks;
 }
 
-#if TC_ONE_SEC < 256
+//#if TC_ONE_SEC < 256
 	static volatile uint08 m_overflows = 0;
-#else
-	static volatile uint16 m_overflows = 0;
-#endif
+//#else
+//	static volatile uint16 m_overflows = 0;
+//#endif
 // every second
 ISR(TIM0_OVF_vect)
 {
@@ -57,8 +56,8 @@ ISR(TIM0_OVF_vect)
 	{
 		m_overflows = 0;
 
-		m_speed = m_distance;
-		m_distance = 0;
+		m_speed = m_ssTicks / SS_TICKS_NUM;
+		m_ssTicks = 0;
 	}
 }
 
@@ -87,7 +86,6 @@ static inline void init(void)
 
 	// members
 	m_ssTicks = 0;
-	m_distance = 0; // in m
 	m_speed = 0; // in m/sec
 
 	SEI();
@@ -103,7 +101,7 @@ int main(void)
 	_delay_ms(3000);
 	MASK_CLEAR(LED_PORT, ledMask);
 
-	uint16 speed = 0;
+	uint08 speed = 0;
 
 	for (;;)
 	{
@@ -112,21 +110,17 @@ int main(void)
 			speed = m_speed;
 		}
 
-		// km/h
-		speed *= 36;
-		speed /= 10;
-
 		uint08 currentMask = 0;
-		if (speed >= 10)
+		if (speed >= SPEED_10)
 		{
 			SBI(currentMask, LED10_BIT);
-			if (speed >= 20)
+			if (speed >= SPEED_20)
 			{
 				SBI(currentMask, LED20_BIT);
-				if (speed >= 30)
+				if (speed >= SPEED_30)
 				{
 					SBI(currentMask, LED30_BIT);
-					if (speed >= 40)
+					if (speed >= SPEED_40)
 					{
 						SBI(currentMask, LED40_BIT);
 					}

@@ -1,0 +1,40 @@
+Default.
+[COM1	com1
+COM2	com2
+COM3	com3
+COM4	com4
+COM5	com5
+COM6	com6
+COM7	com7
+COM8	com8
+COM9	com9
+LPT1	lpt1
+LPT2	lpt2
+LPT3	lpt3]
+
+STK500 v2.
+[USB	avrdoper]
+
+AVRISP mkII.
+[USB	usb]
+
+USBasp.
+[USB	x]
+
+ftbb.
+[FTDI	ft0
+FTDI1	ft1
+FTDI2	ft2
+FTDI3	ft3]
+
+pinb.
+[FTDI	ft0
+FTDI1	ft1
+FTDI2	ft2
+FTDI3	ft3]
+
+2ftbb.
+[FTDI	ft0
+FTDI1	ft1
+FTDI2	ft2
+FTDI3	ft3]
