@@ -41,7 +41,10 @@ static volatile uint08 m_speed = 0; // in m/sec
 //
 ISR(PCINT0_vect)
 {
-	++m_ssTicks;
+	if (GBI(SPEED_SENSOR_PIN, SPEED_SENSOR_BIT))
+	{
+		++m_ssTicks;
+	}
 }
 
 //#if TC_ONE_SEC < 256
@@ -49,10 +52,10 @@ ISR(PCINT0_vect)
 //#else
 //	static volatile uint16 m_overflows = 0;
 //#endif
-// every second
+
 ISR(TIM0_OVF_vect)
 {
-	if (++m_overflows == TC_ONE_SEC)
+	if (++m_overflows == TC_ONE_SEC) // every second
 	{
 		m_overflows = 0;
 
@@ -101,6 +104,24 @@ int main(void)
 	_delay_ms(3000);
 	MASK_CLEAR(LED_PORT, ledMask);
 
+	_delay_ms(1000);
+	SBI(LED_PORT, LED10_BIT);
+	_delay_ms(100);
+	SBI(LED_PORT, LED20_BIT);
+	_delay_ms(100);
+	SBI(LED_PORT, LED30_BIT);
+	_delay_ms(100);
+	SBI(LED_PORT, LED40_BIT);
+	_delay_ms(1000);
+	CBI(LED_PORT, LED40_BIT);
+	_delay_ms(100);
+	CBI(LED_PORT, LED30_BIT);
+	_delay_ms(100);
+	CBI(LED_PORT, LED20_BIT);
+	_delay_ms(100);
+	CBI(LED_PORT, LED10_BIT);
+	_delay_ms(1000);
+
 	uint08 speed = 0;
 
 	for (;;)
@@ -128,8 +149,8 @@ int main(void)
 			}
 		}
 
-		MASK_CLEAR(LED_PORT, ledMask & (~currentMask));
-		MASK_SET(LED_PORT, ledMask & currentMask);
+		MASK_CLEAR(LED_PORT, ledMask & (~currentMask)); // clear
+		MASK_SET(LED_PORT, ledMask & currentMask); // set
 	}
 
 	return 0;
