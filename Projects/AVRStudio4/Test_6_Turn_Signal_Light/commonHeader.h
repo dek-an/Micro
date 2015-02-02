@@ -2,7 +2,7 @@
 #define _COMMONHEADER_H_
 
 #ifndef F_CPU
-#	define F_CPU 8000000UL
+#	define F_CPU 9600000UL
 #endif
 
 #include <avr/io.h>
